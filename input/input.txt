@@ -1,2 +1,3 @@
-probando 123 probando
-3 palabras
+int a = 10+2;
+
+char b = a - 10/5;
