@@ -45,7 +45,7 @@ FOR : 'for';
 
 TYPE : (INT | DOUBLE | CHAR);
 
-ID : (LETTER | '_')(LETTER | DIGIT | '_')?;
+ID : (LETTER | '_')(LETTER | DIGIT | '_')*;
 NUMBER : DIGIT+ ;
 WS : [ \n\t\r] -> skip;
 OTHER : . ;
@@ -78,8 +78,7 @@ instruction : compoudInstruction
             | whileStatement
             | forStatement
             | logicalArithmeticExpression SEMICOLON
-            //| functionStatement
-            //| functionCall
+            | functionStatement
             | incDec SEMICOLON
             ;
 
@@ -157,7 +156,7 @@ factor : NUMBER
        | ID
        | PARENTHESES_O logicalArithmeticExpression PARENTHESES_C
        | incDec
-       //| functionCall
+       | functionCall
        ;
 
 af : MUL factor af
@@ -285,5 +284,53 @@ update : logicalArithmeticExpression COMMA update
        |
        ;
 
+/*
+ * Function statement
+ *
+ * @brief: A function statement can be of two types: 
+ *            just the prototype or the definition with implementation
+ *           
+ *   example: int sum(int, int); , int sum(int a, int b) { return a + b;}
+ */
+
+functionStatement : functionDeclaration compoudInstruction
+                  | functionPrototype
+                  ;
+
+functionDeclaration : TYPE ID PARENTHESES_O parameters PARENTHESES_C
+                    ;
+parameters : TYPE ID
+           | TYPE ID COMMA parameters
+           |
+           ;
+
+functionPrototype : TYPE ID PARENTHESES_O parametersPrototype PARENTHESES_C SEMICOLON
+                  ;
+
+parametersPrototype : TYPE ID
+                    | TYPE ID COMMA parametersPrototype
+                    | TYPE
+                    | TYPE COMMA parametersPrototype
+                    |
+                    ;
+
+/*
+ * Function call
+ *
+ * @brief: A function call is made up of the function name, 
+ *             parameters enclosed in parentheses and a semicolon.
+ *         Parameters can be zero or more factors.
+ *         
+ *           
+ *   example: sum(a,b); , sum(3, sum(a, 4)); 
+ */
+
+functionCall : ID PARENTHESES_O callParameters PARENTHESES_C
+             ;
+
+callParameters : factor 
+               | factor COMMA callParameters
+               |
+               ;
 
 /*end syntactic rules*/

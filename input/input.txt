@@ -1,3 +1,15 @@
-int a = 10+2;
+int sum(int a, int b);
 
-char b = a - 10/5;
+int main(){
+
+    int a = 0;
+    int b = 3;
+
+    int c = sum(a,b);
+
+    return c;
+}
+
+int sum(int a, int b){
+    return a+b;
+}
