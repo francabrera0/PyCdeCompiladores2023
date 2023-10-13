@@ -5,8 +5,8 @@ package compiladores;
 }
 
 /*Begin fragments*/
-fragment LETRA : [A-Za-z];
-fragment DIGITO : [0-9];
+fragment LETTER : [A-Za-z];
+fragment DIGIT : [0-9];
 fragment INT : 'int';
 fragment CHAR : 'char';
 fragment DOUBLE : 'double';
@@ -26,6 +26,15 @@ ADD : '+';
 SUB : '-';
 MUL : '*';
 DIV : '/';
+AND : '&&';
+OR : '||';
+EQUALS : '==';
+NOT_EQUALS : '!=';
+LESS_THAN : '<';
+LESS_OR_EQUALS_THAN : '<=';
+GREATER_THAN : '>';
+GREATER_OR_EQUALS_THAN : '>=';
+
 INCDECOPERATORS : (ADD ADD | SUB SUB);
 
 RETURN : 'return';
@@ -36,8 +45,8 @@ FOR : 'for';
 
 TYPE : (INT | DOUBLE | CHAR);
 
-ID : (LETRA | '_')(LETRA | DIGITO | '_')?;
-NUMBER : DIGITO+ ;
+ID : (LETTER | '_')(LETTER | DIGIT | '_')?;
+NUMBER : DIGIT+ ;
 WS : [ \n\t\r] -> skip;
 OTHER : . ;
 /*end lexical rules*/
@@ -64,17 +73,18 @@ instructions : instruction instructions
 instruction : compoudInstruction
             | statement
             | assignments SEMICOLON                
-            | instructionReturn  
-            | instructionIf
-            | instructionWhile
-            | instructionFor
+            | returnStatement  
+            | ifStatement
+            | whileStatement
+            | forStatement
+            | logicalArithmeticExpression SEMICOLON
             //| functionStatement
             //| functionCall
             | incDec SEMICOLON
             ;
 
 /*
- * Compount instruction
+ * Compound instruction
  *  
  * @brief: Series of instructions enclosed in braces
  */
@@ -111,18 +121,20 @@ assignment : ID EQUAL logicalArithmeticExpression;
 
 
 /*
- * Logical Arithmetic expressions --> INCOMPLETE, logical operations need to be added
+ * Logical Arithmetic expressions
  *
  * @brief:
  */
-logicalArithmeticExpression : arithmeticExpression; //Logical expression missing
+logicalArithmeticExpression : arithmeticExpression
+                            | logicalExpression 
+                            ;
 
 
 /*
  * Arithmetic expressions
  *
  * @brief: An arithmetic expression is a series of terms sepparated by '+' or '-'.
- *         Each of the terms is composed of a series od factors that can be multiplied ('*') or divided ('/').
+ *         Each of the terms is composed of a series of factors that can be multiplied ('*') or divided ('/').
  *         Factors can be:
  *          - A number
  *          - A variable name (ID)
@@ -132,26 +144,58 @@ logicalArithmeticExpression : arithmeticExpression; //Logical expression missing
  *
  *          example: 10 + a + (5*10+3) * --i 
  */
-arithmeticExpression : term t;
+arithmeticExpression : arithmeticTerm at;
 
-term : factor f;
+arithmeticTerm : factor af;
 
-t : ADD term t
-  | SUB term t
-  |
-  ;
+at : ADD arithmeticTerm at
+   | SUB arithmeticTerm at
+   |
+   ;
 
 factor : NUMBER
        | ID
-       | PARENTHESES_O arithmeticExpression PARENTHESES_C
+       | PARENTHESES_O logicalArithmeticExpression PARENTHESES_C
        | incDec
        //| functionCall
        ;
 
-f : MUL factor f
-  | DIV factor f
-  |
-  ;
+af : MUL factor af
+   | DIV factor af
+   |
+   ;
+
+/*
+ * Logical expressions
+ *
+ * @brief: An logical expression is a series of logical terms sepparated by '&&' or '||'.
+ *         Each of the terms is composed of a series of factors that can be compared with different operators (>,>=,<,<=,==,!=).
+ *         Factors can be:
+ *          - A number
+ *          - A variable name (ID)
+ *          - Another arithmetic expression
+ *          - A pre/post increment/deecrement
+ *          - A function call
+ *
+ *           example: a < b && a != 2 
+ */
+logicalExpression : logicalTerm lt;
+
+logicalTerm : factor lf;
+
+lt : AND logicalTerm lt
+   | OR logicalTerm lt
+   |
+   ;
+
+lf : EQUALS logicalTerm lf
+   | NOT_EQUALS logicalTerm lf
+   | LESS_THAN logicalTerm lf
+   | LESS_OR_EQUALS_THAN logicalTerm lf
+   | GREATER_THAN logicalTerm lf
+   | GREATER_OR_EQUALS_THAN logicalTerm lf
+   |
+   ;
 
 
 /*
@@ -167,7 +211,6 @@ incDec : INCDECOPERATORS ID
        ;
 
 
-
 /*
  * Return
  *
@@ -175,9 +218,9 @@ incDec : INCDECOPERATORS ID
  *
  *  example: return;, return a+1; 
  */
-instructionReturn : RETURN logicalArithmeticExpression SEMICOLON
-                  | RETURN SEMICOLON
-                  ;
+returnStatement : RETURN logicalArithmeticExpression SEMICOLON
+                | RETURN SEMICOLON
+                ;
 
 /*
  * If else
@@ -191,13 +234,13 @@ instructionReturn : RETURN logicalArithmeticExpression SEMICOLON
  *            else
  *              printf ("a equal or less than 10)
  */
-instructionIf : IF PARENTHESES_O logicalArithmeticExpression PARENTHESES_C  instruction instructionElseIf
-              ;
+ifStatement : IF PARENTHESES_O logicalArithmeticExpression PARENTHESES_C  instruction elseIfStatement
+            ;
 
-instructionElseIf : ELSE IF PARENTHESES_O logicalArithmeticExpression PARENTHESES_C instruction instructionElseIf
-                  | ELSE instruction
-                  |
-                  ;
+elseIfStatement : ELSE IF PARENTHESES_O logicalArithmeticExpression PARENTHESES_C instruction elseIfStatement
+                | ELSE instruction
+                |
+                ;
 
 /*
  * While
@@ -207,8 +250,8 @@ instructionElseIf : ELSE IF PARENTHESES_O logicalArithmeticExpression PARENTHESE
  *
  *  example: while(a>10){}
  */
-instructionWhile : WHILE PARENTHESES_O logicalArithmeticExpression PARENTHESES_C (instruction | SEMICOLON)
-                 ;
+whileStatement : WHILE PARENTHESES_O logicalArithmeticExpression PARENTHESES_C (instruction | SEMICOLON)
+               ;
 
 
 /*
@@ -223,8 +266,8 @@ instructionWhile : WHILE PARENTHESES_O logicalArithmeticExpression PARENTHESES_C
  *
  *   example: for(;;); , for(int i=0; i<10; i++)
  */
-instructionFor : FOR PARENTHESES_O init condition update PARENTHESES_C (instruction | SEMICOLON)
-               ;
+forStatement : FOR PARENTHESES_O init condition update PARENTHESES_C (instruction | SEMICOLON)
+             ;
 
 
 init : statement
@@ -236,13 +279,11 @@ condition : logicalArithmeticExpression SEMICOLON
           | SEMICOLON
           ;
 
-update : updates //Assignments missing
+update : logicalArithmeticExpression COMMA update
+       | logicalArithmeticExpression
+       | assignments
        |
        ;
- 
-updates : logicalArithmeticExpression COMMA updates
-        | logicalArithmeticExpression
-        ;
 
 
 /*end syntactic rules*/
