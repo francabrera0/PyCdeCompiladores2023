@@ -10,6 +10,7 @@ fragment DIGIT : [0-9];
 fragment INT : 'int';
 fragment CHAR : 'char';
 fragment DOUBLE : 'double';
+fragment VOID : 'void';
 /*end fragments*/
 
 /*Begin lexical rules*/
@@ -101,9 +102,11 @@ statement : TYPE statementsTypes SEMICOLON;
 
 statementsTypes : ID COMMA statementsTypes
                 | ID
-                | assignment COMMA statementsTypes
-                | assignment
+                | assignamentInStatement COMMA statementsTypes
+                | assignamentInStatement
                 ;
+
+assignamentInStatement : ID EQUAL logicalArithmeticExpression;
 
 /*
  * Assignment

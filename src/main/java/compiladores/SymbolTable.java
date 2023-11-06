@@ -1,6 +1,6 @@
 package compiladores;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Iterator;
@@ -23,7 +23,7 @@ public class SymbolTable {
     }
 
     public void addContext() {
-        list.add(new HashMap<String, ID>());
+        list.add(new LinkedHashMap<String, ID>());
     }
 
     public void delContext() {
@@ -50,6 +50,32 @@ public class SymbolTable {
         if (list.getLast().containsKey(name))
             return list.getLast().get(name);
         return null;
+    }
+
+    public void printSymbolTable() {
+        System.out.println("Symbol Table:");
+        int contextNumber = 1;
+        for (Map<String, ID> context : list) {
+            System.out.println("Context " + contextNumber + ":");
+            for (Map.Entry<String, ID> entry : context.entrySet()) {
+                ID id = entry.getValue();
+
+                if (id instanceof Variable) {
+                    System.out.println("    Variable: " + entry.getKey() + " : type ->" + id.getDataType() + ", used ->" + id.getUsed() + ", initialized ->" + id.getInitialized());
+                } 
+                
+                else if (id instanceof Function) {
+                    Function function = (Function) id;
+                    System.out.print("    Function: " + entry.getKey() + " : type ->" + function.getDataType()+ ", used ->" + function.getUsed() + ", initialized ->" + function.getInitialized() + ", args ->(");
+                    LinkedList <Parameter> args = function.getArgs();
+                    for(Parameter arg : args) {
+                        System.out.print(arg.getName() + " -> " +  arg.getDataType().toString()+ ", ");
+                    }
+                    System.out.println(")");
+                }
+            }
+            contextNumber++;
+        }
     }
 
 

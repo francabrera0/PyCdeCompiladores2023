@@ -5,11 +5,9 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 //import org.antlr.v4.runtime.tree.ParseTree;
 
-// Las diferentes entradas se explicaran oportunamente
 public class App {
     public static void main(String[] args) throws Exception {
-        System.out.println("Hello, Compilador!!!");
-        // create a CharStream that reads from file
+
         CharStream input = CharStreams.fromFileName("input/input.txt");
 
         // create a lexer that feeds off of input CharStream
@@ -31,9 +29,11 @@ public class App {
         // En este caso la regla es el simbolo inicial
         parser.program();
         //ParseTree tree =  parser.program();
+
+
         // Conectamos el visitor
-        // Caminante visitor = new Caminante();
-        // visitor.visit(tree);
+        //Visitor visitor = new Visitor();
+        //visitor.visit(tree);
         // System.out.println(visitor);
         // System.out.println(visitor.getErrorNodes());
         // Imprime el arbol obtenido

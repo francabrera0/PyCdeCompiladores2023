@@ -2,9 +2,36 @@ package compiladores;
 
 import java.util.LinkedList;
 
+
+class Parameter {
+    private DataType dataType;
+    private String name;
+
+    public Parameter(DataType dataType, String name) {
+        this.dataType = dataType;
+        this.name = name;
+    }
+
+    public DataType getDataType() {
+        return this.dataType;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setDataType(DataType dataType) {
+        this.dataType = dataType;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
 public class Function extends ID {
 
-    private LinkedList<DataType> args;
+    private LinkedList<Parameter> args;
     private Boolean isPrototype;
 
     public Function (String name, DataType dataType, Boolean used, Boolean initialized) {
@@ -12,20 +39,21 @@ public class Function extends ID {
         super.dataType = dataType;
         super.used = used;
         super.initialized = initialized;
-        this.args = new LinkedList<DataType>();
+        this.args = new LinkedList<Parameter>();
         this.isPrototype = false;
     }
 
-    public void setArgs(LinkedList<DataType> args) {
+    public void setArgs(LinkedList<Parameter> args) {
         this.args = args;
     }
 
-    public LinkedList<DataType> getArgs() {
+    public LinkedList<Parameter> getArgs() {
         return this.args;
     }
 
-    public void addArg(DataType arg) {
-        args.add(arg);
+    public void addArg(DataType arg, String name) {
+        Parameter parameter = new Parameter(arg, name);
+        args.add(parameter);
     }
 
     public void setIsPrototype(Boolean isPrototype) {
