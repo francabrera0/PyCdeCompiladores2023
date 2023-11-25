@@ -7,11 +7,13 @@ import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
 import compiladores.compiladoresParser.CompoudInstructionContext;
 import compiladores.compiladoresParser.FunctionDeclarationContext;
+import compiladores.compiladoresParser.FunctionPrototypeContext;
 import compiladores.compiladoresParser.FunctionStatementContext;
 import compiladores.compiladoresParser.ParametersContext;
 import compiladores.compiladoresParser.ProgramContext;
 import compiladores.compiladoresParser.StatementContext;
 import compiladores.compiladoresParser.StatementsTypesContext;
+import compiladores.compiladoresParser.ParametersPrototypeContext;
 
 
 public class Listener extends compiladoresBaseListener{
@@ -64,29 +66,68 @@ public class Listener extends compiladoresBaseListener{
      */
     @Override
     public void exitFunctionDeclaration(FunctionDeclarationContext ctx) {
-        Function prototype = (Function) symbolTable.searchSymbol(ctx.ID().getText());
-
-        if (prototype == null) {
-            DataType dataType = DataType.getDataTypeFromString(ctx.TYPE().getText());
-            Function function = new Function(ctx.ID().getText(), dataType, false, true);
         
-            ParametersContext parameters = ctx.parameters();
+        String functionName = ctx.ID().getText();
+        ParametersContext parameters = ctx.parameters();
+        DataType dataType = DataType.getDataTypeFromString(ctx.TYPE().getText());
 
-            while(parameters.getChildCount() != 0){
-                function.addArg(DataType.getDataTypeFromString(parameters.TYPE().getText()),
-                                parameters.ID().getText());
-                if(parameters.getChildCount() == 4) 
-                    parameters = (ParametersContext) parameters.parameters();
-                else
-                    break;
+        Function function = new Function(functionName, dataType, false, true);
+    
+        while(parameters.getChildCount() != 0){
+            function.addArg(DataType.getDataTypeFromString(parameters.TYPE().getText()),
+                            parameters.ID().getText());
+            if(parameters.getChildCount() == 4) 
+                parameters = (ParametersContext) parameters.parameters();
+            else
+                break;
+        }
+
+        Function prototype = (Function) symbolTable.searchLocalSymbol(functionName);
+        if(prototype == null) {
+            symbolTable.addSymbol(function);
+
+        }
+        else {
+            if(function.getDataType() != prototype.getDataType())
+                throw new RuntimeException("error: conflicting types for ' " + functionName + "'");
+                
+            if(!function.compareArgs(prototype.getArgs()))
+                throw new RuntimeException("error: conflicting types for ' " + functionName + "'");
+
+            prototype.setArgs(function.getArgs());
+            prototype.setInitialized(true);
+        }
+            
+    }
+
+    
+    /**
+     * Agrega la el prototipo de la función al contexto actual.
+     */
+    @Override
+    public void exitFunctionPrototype(FunctionPrototypeContext ctx) {
+        
+        String functionName = ctx.ID().getText();
+
+        if(symbolTable.searchLocalSymbol(functionName) == null) {
+            DataType dataType = DataType.getDataTypeFromString(ctx.TYPE().getText());
+            Function function = new Function(functionName, dataType, false, false);
+
+            ParametersPrototypeContext parameters = ctx.parametersPrototype();
+
+            while(parameters.getChildCount() != 0) {
+                function.addArg(DataType.getDataTypeFromString(parameters.TYPE().getText()), null);
+
+                if(parameters.getChildCount() >= 3)
+                    parameters = parameters.parametersPrototype();
+                else break;
             }
             symbolTable.addSymbol(function);
         }
 
-        else {
-            System.out.println("Function with prototype");
-        }
-            
+        else
+            throw new RuntimeException("error: redefinition of prototype ' " + functionName + "'");
+
     }
 
     /**

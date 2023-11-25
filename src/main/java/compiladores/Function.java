@@ -63,5 +63,15 @@ public class Function extends ID {
     public Boolean getIsPrototype() {
         return this.isPrototype;
     }
+
+    public Boolean compareArgs(LinkedList<Parameter> prototypeArgs) {
+        if(this.args.size() != prototypeArgs.size())
+            return false;
+        for(int i=0; i<this.args.size(); i++)
+            if(this.args.get(i).getDataType() != prototypeArgs.get(i).getDataType())
+                return false;
+        
+        return true;
+    }
     
 }

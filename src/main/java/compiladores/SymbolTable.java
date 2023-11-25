@@ -53,7 +53,7 @@ public class SymbolTable {
     }
 
     public void printSymbolTable() {
-        System.out.println("Symbol Table:");
+        System.out.println("--------------------->Symbol Table<---------------------");
         int contextNumber = 1;
         for (Map<String, ID> context : list) {
             System.out.println("Context " + contextNumber + ":");
