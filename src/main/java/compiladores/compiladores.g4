@@ -71,7 +71,7 @@ instructions : instruction instructions
 /*
  * Allowed instructions
  */
-instruction : compoudInstruction
+instruction : compoundInstruction
             | statement
             | assignments SEMICOLON                
             | returnStatement  
@@ -88,7 +88,7 @@ instruction : compoudInstruction
  *  
  * @brief: Series of instructions enclosed in braces
  */
-compoudInstruction : BRACES_O instructions BRACES_C;
+compoundInstruction : BRACES_O instructions BRACES_C;
 
 
 /*
@@ -296,7 +296,7 @@ update : logicalArithmeticExpression COMMA update
  *   example: int sum(int, int); , int sum(int a, int b) { return a + b;}
  */
 
-functionStatement : functionDeclaration compoudInstruction
+functionStatement : functionDeclaration compoundInstruction
                   | functionPrototype
                   ;
 

@@ -5,7 +5,7 @@ import java.util.LinkedList;
 
 import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
-import compiladores.compiladoresParser.CompoudInstructionContext;
+import compiladores.compiladoresParser.CompoundInstructionContext;
 import compiladores.compiladoresParser.FunctionDeclarationContext;
 import compiladores.compiladoresParser.FunctionPrototypeContext;
 import compiladores.compiladoresParser.FunctionStatementContext;
@@ -32,7 +32,7 @@ public class Listener extends compiladoresBaseListener{
     }
 
     @Override
-    public void enterCompoudInstruction(CompoudInstructionContext ctx) {
+    public void enterCompoundInstruction(CompoundInstructionContext ctx) {
         symbolTable.addContext(); 
 
         if(ctx.getParent() instanceof FunctionStatementContext) { //Viene de una declaración de función
@@ -48,7 +48,7 @@ public class Listener extends compiladoresBaseListener{
     }
 
     @Override
-    public void exitCompoudInstruction(CompoudInstructionContext ctx) {
+    public void exitCompoundInstruction(CompoundInstructionContext ctx) {
         symbolTable.printSymbolTable();
         //Al salir debería verificar si hay variables o funciones sin usar
         symbolTable.delContext();
