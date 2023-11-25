@@ -48,7 +48,7 @@ public class Listener extends compiladoresBaseListener{
     @Override
     public void exitCompoudInstruction(CompoudInstructionContext ctx) {
         symbolTable.printSymbolTable();
-
+        //Al salir debería verificar si hay variables o funciones sin usar
         symbolTable.delContext();
     }
 
@@ -92,11 +92,12 @@ public class Listener extends compiladoresBaseListener{
     /**
      * Cada variable declarada se agrega al contexto actual. Contempla las inicializadas y 
      * no inicializadas. Verifica la re definición local de variables.
+     * Caso de ejemplo: int a, b=12, c;
      */
     @Override
     public void exitStatement(StatementContext ctx) {
 
-        DataType statementDataType = DataType.getDataTypeFromString(ctx.TYPE().getText());
+        DataType statementDataType = DataType.getDataTypeFromString(ctx.TYPE().getText()); //Todas tendrán el mismo tipo
         StatementsTypesContext statementsTypes = ctx.statementsTypes();
 
         while(true) {
@@ -137,10 +138,15 @@ public class Listener extends compiladoresBaseListener{
      */
     @Override
     public void exitAssignment(AssignmentContext ctx) {
-        System.out.println("Assignment " + ctx.getText());
-    }
-    
-    
-    
+        String variableName = ctx.ID().getText();
 
+        ID variable = symbolTable.searchSymbol(variableName);
+
+        if(variable == null)
+            throw new RuntimeException("error: '" + variableName + "' undeclared");
+        else {
+            if(!variable.getInitialized())
+                variable.setInitialized(true);
+        }
+    }
 }
