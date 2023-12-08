@@ -44,7 +44,7 @@ ELSE : 'else';
 WHILE : 'while';
 FOR : 'for';
 
-TYPE : (INT | DOUBLE | CHAR);
+TYPE : (INT | DOUBLE | CHAR | VOID);
 
 ID : (LETTER | '_')(LETTER | DIGIT | '_')*;
 NUMBER : DIGIT+ ;
@@ -218,10 +218,9 @@ incDec : INCDECOPERATORS ID
  *
  * @brief: A return statement can return an logical arithmetic expression or nothing
  *
- *  example: return;, return a+1; 
+ *  example: return a+1; 
  */
 returnStatement : RETURN logicalArithmeticExpression SEMICOLON
-                | RETURN SEMICOLON
                 ;
 
 /*

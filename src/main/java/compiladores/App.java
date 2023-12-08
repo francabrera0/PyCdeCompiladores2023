@@ -30,6 +30,7 @@ public class App {
         parser.program();
         //ParseTree tree =  parser.program();
 
+        System.out.println("\n\nParser finished");
 
         // Conectamos el visitor
         //Visitor visitor = new Visitor();

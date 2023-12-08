@@ -6,11 +6,15 @@ import java.util.LinkedList;
 import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
 import compiladores.compiladoresParser.CompoundInstructionContext;
+import compiladores.compiladoresParser.FactorContext;
+import compiladores.compiladoresParser.FunctionCallContext;
 import compiladores.compiladoresParser.FunctionDeclarationContext;
 import compiladores.compiladoresParser.FunctionPrototypeContext;
 import compiladores.compiladoresParser.FunctionStatementContext;
+import compiladores.compiladoresParser.InstructionsContext;
 import compiladores.compiladoresParser.ParametersContext;
 import compiladores.compiladoresParser.ProgramContext;
+import compiladores.compiladoresParser.ReturnStatementContext;
 import compiladores.compiladoresParser.StatementContext;
 import compiladores.compiladoresParser.StatementsTypesContext;
 import compiladores.compiladoresParser.ParametersPrototypeContext;
@@ -19,23 +23,39 @@ import compiladores.compiladoresParser.ParametersPrototypeContext;
 public class Listener extends compiladoresBaseListener{
     private SymbolTable symbolTable = SymbolTable.getInstanceOf();
     
+    /**
+     * Cuando entra en la regla programa, agrego un nuevo contexto a la tabla de 
+     * símbolos. Este es el contexto global
+     */
     @Override
     public void enterProgram(ProgramContext ctx) {
         System.out.println("------------>Compilation begins<------------");
         symbolTable.addContext(); //Global context
     }
     
+    /**
+     * Al salir del programa elimino el contexto global.
+     */
     @Override
     public void exitProgram(ProgramContext ctx) {
         System.out.println("------------->Compilation ends<-------------");
+        
+        //Verificar si hay funciones usadas no inicializadas.
+
+        System.out.println("Unused: " + symbolTable.getUnusedID());
         symbolTable.delContext(); //Global context
     }
 
+    /**
+     * Al ingresar a esta regla, debo generar un nuevo contexto, en caso de que se ingrese desde una declaración de función
+     *  debo agregar los argumentos de la función al contexto local. Similar si vengo de un for.
+     */
     @Override
     public void enterCompoundInstruction(CompoundInstructionContext ctx) {
         symbolTable.addContext(); 
 
-        if(ctx.getParent() instanceof FunctionStatementContext) { //Viene de una declaración de función
+        //Verifico si viene de una declaración de función
+        if(ctx.getParent() instanceof FunctionStatementContext) {
             Function function = (Function) symbolTable.searchSymbol(ctx.getParent().getChild(0).getChild(1).getText());
             LinkedList<Parameter> parameters = function.getArgs();
 
@@ -44,13 +64,49 @@ public class Listener extends compiladoresBaseListener{
                 symbolTable.addSymbol(variable);
             }
         }
-
     }
 
+
+    /**
+     * Al salir de una compoundInstruction:
+     *  -Si viene de una definición de función chequeo el return
+     *  -Debo verificar si quedaron variables o funciones sin usar
+     *  -Elimino el contexto
+     */
     @Override
     public void exitCompoundInstruction(CompoundInstructionContext ctx) {
         symbolTable.printSymbolTable();
-        //Al salir debería verificar si hay variables o funciones sin usar
+        
+        if(ctx.getParent() instanceof FunctionStatementContext) {
+            
+            //Obtengo el tipo de daato de retorno de la función
+            DataType returnType =  DataType.getDataTypeFromString(ctx.getParent().getChild(0).getChild(0).getText());
+            Boolean returnFlag = false;
+
+            InstructionsContext instructions = ctx.instructions();
+
+            while(instructions.getChildCount() != 0) {
+                
+                //Busco la instrucción de return
+                if(instructions.instruction().getChild(0) instanceof ReturnStatementContext) {
+                    returnFlag = true;
+                    //System.out.println(instructions.instruction().getChild(0).getChild(1));
+                    break;
+                }
+                instructions = (InstructionsContext) instructions.instructions();
+            }
+
+            if(returnType.toString() == "VOID" && returnFlag) 
+                throw new RuntimeException("error: 'return' with a value in function returning void");
+
+            if(returnType.toString() != "VOID" && !returnFlag)
+                throw new RuntimeException("error: control reaches end of non-void function [-Wreturn-type]");
+        }
+
+        //Verifico si quedo algo sin usar
+
+        System.out.println("Unused: " + symbolTable.getUnusedID());
+
         symbolTable.delContext();
     }
 
@@ -190,4 +246,44 @@ public class Listener extends compiladoresBaseListener{
                 variable.setInitialized(true);
         }
     }
+
+    /**
+     * Los factores son los "operandos" de las expresiones aritmético lógicas. Si hay una variable
+     * como factor, entonces esta debe considerarse como usada. Antes debe verificarse que exista
+     * en cualquier contexto superior al actual (o el actual).
+     */
+    @Override
+    public void exitFactor(FactorContext ctx) {
+        if(ctx.ID() != null){
+            ID id = symbolTable.searchSymbol(ctx.ID().getText());
+
+            if(id != null) {
+                if(!id.getInitialized())
+                    System.out.println("warning: '" + ctx.ID().getText() + "' is used uninitialized");
+                id.setUsed(true);
+            }
+            else
+                throw new RuntimeException("error: '" + ctx.ID().getText() + "' undeclared (first use in this function)");
+        }
+    }
+
+    /**
+     * Salgo de una llamada a función. Debo verificar primero que exista.
+     *  Luego, si es un factor (está en una asignación del lado derecho) debo corroborar que no sea void
+     *  En este punto se le pone la función como usada, al terminar todo (exit program) debería ver si hay funciones
+     *  usadas pero no inicializadas.
+     */
+    @Override
+    public void exitFunctionCall(FunctionCallContext ctx) {
+        ID id = symbolTable.searchSymbol(ctx.ID().getText());
+
+        if(id != null){
+            if (ctx.getParent() instanceof FactorContext && id.getDataType() == DataType.VOID)
+                throw new RuntimeException("error: void value not ignored as it ought to be");
+                
+            id.setUsed(true);
+        }
+        else 
+            throw new RuntimeException("error: implicit declaration of function " + ctx.ID().getText());
+    }    
 }

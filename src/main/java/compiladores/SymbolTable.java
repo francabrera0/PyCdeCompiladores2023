@@ -3,6 +3,8 @@ package compiladores;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 
@@ -78,6 +80,16 @@ public class SymbolTable {
         }
     }
 
+    public List<String> getUnusedID(){
+        List<String> unusedList = new ArrayList<String>();
 
+        for(Map.Entry<String, ID> entry: list.getLast().entrySet()) {
+            if(!entry.getValue().getUsed()) {
+                unusedList.add(entry.getKey());
+            }
+        }
+
+        return unusedList;
+    }
 
 }
