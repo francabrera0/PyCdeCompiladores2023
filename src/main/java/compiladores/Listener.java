@@ -2,11 +2,11 @@ package compiladores;
 
 import java.util.LinkedList;
 
-
 import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
 import compiladores.compiladoresParser.CompoundInstructionContext;
 import compiladores.compiladoresParser.FactorContext;
+import compiladores.compiladoresParser.ForStatementContext;
 import compiladores.compiladoresParser.FunctionCallContext;
 import compiladores.compiladoresParser.FunctionDeclarationContext;
 import compiladores.compiladoresParser.FunctionPrototypeContext;
@@ -17,6 +17,7 @@ import compiladores.compiladoresParser.ProgramContext;
 import compiladores.compiladoresParser.ReturnStatementContext;
 import compiladores.compiladoresParser.StatementContext;
 import compiladores.compiladoresParser.StatementsTypesContext;
+import compiladores.compiladoresParser.WhileStatementContext;
 import compiladores.compiladoresParser.ParametersPrototypeContext;
 
 
@@ -24,13 +25,13 @@ public class Listener extends compiladoresBaseListener{
     private SymbolTable symbolTable = SymbolTable.getInstanceOf();
     
     /**
-     * Cuando entra en la regla programa, agrego un nuevo contexto a la tabla de 
-     * símbolos. Este es el contexto global
+     * Esta es la regla inicial, al ingresar debo crear un nuevo contexto, este corresponde 
+     * al contexto global.
      */
     @Override
     public void enterProgram(ProgramContext ctx) {
         System.out.println("------------>Compilation begins<------------");
-        symbolTable.addContext(); //Global context
+        symbolTable.addContext();
     }
     
     /**
@@ -43,19 +44,23 @@ public class Listener extends compiladoresBaseListener{
         //Verificar si hay funciones usadas no inicializadas.
 
         System.out.println("Unused: " + symbolTable.getUnusedID());
-        symbolTable.delContext(); //Global context
+        symbolTable.delContext();
     }
 
     /**
-     * Al ingresar a esta regla, debo generar un nuevo contexto, en caso de que se ingrese desde una declaración de función
-     *  debo agregar los argumentos de la función al contexto local. Similar si vengo de un for.
+     * Las instrucciones compuestas son las que se encuentran entre {}
+     * Al ingresar a esta regla, se crea un nuevo contexto. Se pueden dar diferentes casos:
+     *  - Si se entra a una instrucción compuesta desde una declaración de función, se deben
+     *      agregar los parámetros de la función al contexto local.
+     *  - Si viene de un for, debo agregar las definiciones que se hicieron en la declaración
+     *      del mismo.
      */
     @Override
     public void enterCompoundInstruction(CompoundInstructionContext ctx) {
-        symbolTable.addContext(); 
-
+        
         //Verifico si viene de una declaración de función
         if(ctx.getParent() instanceof FunctionStatementContext) {
+            symbolTable.addContext(); 
             Function function = (Function) symbolTable.searchSymbol(ctx.getParent().getChild(0).getChild(1).getText());
             LinkedList<Parameter> parameters = function.getArgs();
 
@@ -64,6 +69,7 @@ public class Listener extends compiladoresBaseListener{
                 symbolTable.addSymbol(variable);
             }
         }
+
     }
 
 
@@ -78,8 +84,7 @@ public class Listener extends compiladoresBaseListener{
         symbolTable.printSymbolTable();
         
         if(ctx.getParent() instanceof FunctionStatementContext) {
-            
-            //Obtengo el tipo de daato de retorno de la función
+            //Obtengo el tipo de dato de retorno de la función
             DataType returnType =  DataType.getDataTypeFromString(ctx.getParent().getChild(0).getChild(0).getText());
             Boolean returnFlag = false;
 
@@ -103,8 +108,8 @@ public class Listener extends compiladoresBaseListener{
                 throw new RuntimeException("error: control reaches end of non-void function [-Wreturn-type]");
         }
 
-        //Verifico si quedo algo sin usar
-
+        
+        //Ver como manejo los warnings de las variables o funciones sin usar.
         System.out.println("Unused: " + symbolTable.getUnusedID());
 
         symbolTable.delContext();
@@ -129,6 +134,7 @@ public class Listener extends compiladoresBaseListener{
 
         Function function = new Function(functionName, dataType, false, true);
     
+        //Agrego todos los parámetros de la función
         while(parameters.getChildCount() != 0){
             function.addArg(DataType.getDataTypeFromString(parameters.TYPE().getText()),
                             parameters.ID().getText());
@@ -139,26 +145,31 @@ public class Listener extends compiladoresBaseListener{
         }
 
         Function prototype = (Function) symbolTable.searchLocalSymbol(functionName);
+        //Si no tiene prototipo, entonces agrego la función al contexto actual
         if(prototype == null) {
+            if(functionName.equals("main"))
+                function.setUsed(true);
+            
             symbolTable.addSymbol(function);
-
         }
+        
         else {
+            //Declaración con distinto tipo que el prototipo
             if(function.getDataType() != prototype.getDataType())
                 throw new RuntimeException("error: conflicting types for ' " + functionName + "'");
-                
+            //Diferentes argumentos en los argumentos
             if(!function.compareArgs(prototype.getArgs()))
                 throw new RuntimeException("error: conflicting types for ' " + functionName + "'");
-
+            
+            //Le agrega los argumentos al prototipo y lo pone como inicializado
             prototype.setArgs(function.getArgs());
             prototype.setInitialized(true);
         }
-            
     }
 
     
     /**
-     * Agrega la el prototipo de la función al contexto actual.
+     * Agrega la el prototipo con sus argumentos de la función al contexto actual.
      */
     @Override
     public void exitFunctionPrototype(FunctionPrototypeContext ctx) {
@@ -285,5 +296,18 @@ public class Listener extends compiladoresBaseListener{
         }
         else 
             throw new RuntimeException("error: implicit declaration of function " + ctx.ID().getText());
+    }
+
+    @Override
+    public void enterForStatement(ForStatementContext ctx) {
+        symbolTable.addContext();
+    }
+    
+    @Override
+    public void enterWhileStatement(WhileStatementContext ctx) {
+        symbolTable.addContext();
     }    
+
+    
 }
+
