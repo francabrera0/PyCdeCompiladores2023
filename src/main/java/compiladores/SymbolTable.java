@@ -4,8 +4,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.List;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 
 
 public class SymbolTable {
@@ -52,6 +56,28 @@ public class SymbolTable {
         if (list.getLast().containsKey(name))
             return list.getLast().get(name);
         return null;
+    }    
+
+    public List<String> getUnusedID() {
+        List<String> unusedList = new ArrayList<String>();
+
+        for(Map.Entry<String, ID> entry: list.getLast().entrySet()) {
+            if(!entry.getValue().getUsed()) {
+                unusedList.add(entry.getKey());
+            }
+        }
+        return unusedList;
+    }
+
+    public List<String> getUsedUninitialized() {
+        List<String> usedUninitialized = new ArrayList<String>();
+
+        for(Map.Entry<String, ID> entry: list.getLast().entrySet()) {
+            if(entry.getValue() instanceof Function && entry.getValue().getUsed() && !entry.getValue().getInitialized()) {
+                usedUninitialized.add(entry.getKey());
+            }
+        }
+        return usedUninitialized;
     }
 
     public void printSymbolTable() {
@@ -78,27 +104,53 @@ public class SymbolTable {
             }
             contextNumber++;
         }
+        System.out.println("--------------------------------------------------------");
     }
 
-    public List<String> getUnusedID() {
-        List<String> unusedList = new ArrayList<String>();
+    public void printSymbolTableToFile(String filePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
+            writer.write("--------------------->Symbol Table<---------------------");
+            writer.newLine();
+            int contextNumber = 1;
+            for (Map<String, ID> context : list) {
+                writer.write("Context " + contextNumber + ":");
+                writer.newLine();
+                for (Map.Entry<String, ID> entry : context.entrySet()) {
+                    ID id = entry.getValue();
 
-        for(Map.Entry<String, ID> entry: list.getLast().entrySet()) {
-            if(!entry.getValue().getUsed()) {
-                unusedList.add(entry.getKey());
+                    if (id instanceof Variable) {
+                        writer.write("    Variable: " + entry.getKey() + " : type ->" + id.getDataType() + ", used ->" + id.getUsed() + ", initialized ->" + id.getInitialized());
+                        writer.newLine();
+                    } else if (id instanceof Function) {
+                        Function function = (Function) id;
+                        writer.write("    Function: " + entry.getKey() + " : type ->" + function.getDataType() + ", used ->" + function.getUsed() + ", initialized ->" + function.getInitialized() + ", args ->(");
+                        LinkedList<Parameter> args = function.getArgs();
+                        for (Parameter arg : args) {
+                            writer.write(arg.getName() + " -> " + arg.getDataType().toString() + ", ");
+                        }
+                        writer.write(")");
+                        writer.newLine();
+                    }
+                }
+                contextNumber++;
+            }
+            writer.write("--------------------------------------------------------");
+            writer.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteFile(String filePath) {
+        File archivo = new File(filePath);
+        
+        if (archivo.exists()) {
+            if (archivo.delete()) {
+                System.out.println("The file has been deleted.");
+            } else {
+                System.out.println("The file has not been deleted.");
             }
         }
-        return unusedList;
     }
 
-    public List<String> getUsedUninitialized() {
-        List<String> usedUninitialized = new ArrayList<String>();
-
-        for(Map.Entry<String, ID> entry: list.getLast().entrySet()) {
-            if(entry.getValue() instanceof Function && entry.getValue().getUsed() && !entry.getValue().getInitialized()) {
-                usedUninitialized.add(entry.getKey());
-            }
-        }
-        return usedUninitialized;
-    }
 }

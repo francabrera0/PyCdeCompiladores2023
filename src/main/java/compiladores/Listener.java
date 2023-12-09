@@ -23,13 +23,16 @@ import compiladores.compiladoresParser.ParametersPrototypeContext;
 
 public class Listener extends compiladoresBaseListener{
     private SymbolTable symbolTable = SymbolTable.getInstanceOf();
+    String filePath = "./symbolTable.log";
     
+
     /**
      * Esta es la regla inicial, al ingresar debo crear un nuevo contexto, este corresponde 
      * al contexto global.
      */
     @Override
     public void enterProgram(ProgramContext ctx) {
+        symbolTable.deleteFile(filePath);
         System.out.println("------------>Compilation begins<------------");
         symbolTable.addContext();
     }
@@ -41,6 +44,7 @@ public class Listener extends compiladoresBaseListener{
     public void exitProgram(ProgramContext ctx) {
         
         symbolTable.printSymbolTable();
+        symbolTable.printSymbolTableToFile(filePath);
         
         //Verificar si hay funciones usadas no inicializadas.
         
@@ -86,7 +90,7 @@ public class Listener extends compiladoresBaseListener{
      */
     @Override
     public void exitCompoundInstruction(CompoundInstructionContext ctx) {
-        symbolTable.printSymbolTable();
+        
         
         if(ctx.getParent() instanceof FunctionStatementContext) {
             //Obtengo el tipo de dato de retorno de la función
@@ -113,7 +117,8 @@ public class Listener extends compiladoresBaseListener{
                 throw new RuntimeException("error: control reaches end of non-void function [-Wreturn-type]");
         }
 
-        
+        symbolTable.printSymbolTable();
+        symbolTable.printSymbolTableToFile(filePath);
         //Ver como manejo los warnings de las variables o funciones sin usar.
         System.out.println("Unused: " + symbolTable.getUnusedID());
 

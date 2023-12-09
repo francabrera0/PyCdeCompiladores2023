@@ -7,3 +7,4 @@ compiladores*.java
 *.class
 *.jar
 *.tokens
+*.log
