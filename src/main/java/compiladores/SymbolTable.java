@@ -80,7 +80,7 @@ public class SymbolTable {
         }
     }
 
-    public List<String> getUnusedID(){
+    public List<String> getUnusedID() {
         List<String> unusedList = new ArrayList<String>();
 
         for(Map.Entry<String, ID> entry: list.getLast().entrySet()) {
@@ -88,8 +88,17 @@ public class SymbolTable {
                 unusedList.add(entry.getKey());
             }
         }
-
         return unusedList;
     }
 
+    public List<String> getUsedUninitialized() {
+        List<String> usedUninitialized = new ArrayList<String>();
+
+        for(Map.Entry<String, ID> entry: list.getLast().entrySet()) {
+            if(entry.getValue() instanceof Function && entry.getValue().getUsed() && !entry.getValue().getInitialized()) {
+                usedUninitialized.add(entry.getKey());
+            }
+        }
+        return usedUninitialized;
+    }
 }

@@ -39,12 +39,17 @@ public class Listener extends compiladoresBaseListener{
      */
     @Override
     public void exitProgram(ProgramContext ctx) {
-        System.out.println("------------->Compilation ends<-------------");
+        
+        symbolTable.printSymbolTable();
         
         //Verificar si hay funciones usadas no inicializadas.
-
+        
         System.out.println("Unused: " + symbolTable.getUnusedID());
+        //Si desde acá llamo a una función que me diga si hay funciones usadas que no fueron inicializadas
+        //Debería funcionar ya que se termina el scope de la función acá.
+        System.out.println("Used uninitialized: " + symbolTable.getUsedUninitialized());
         symbolTable.delContext();
+        System.out.println("------------->Compilation ends<-------------");
     }
 
     /**
@@ -112,6 +117,9 @@ public class Listener extends compiladoresBaseListener{
         //Ver como manejo los warnings de las variables o funciones sin usar.
         System.out.println("Unused: " + symbolTable.getUnusedID());
 
+        //Si desde acá llamo a una función que me diga si hay funciones usadas que no fueron inicializadas
+        //Debería funcionar ya que se termina el scope de la función acá.
+        System.out.println("Used uninitialized: " + symbolTable.getUsedUninitialized());
         symbolTable.delContext();
     }
 
