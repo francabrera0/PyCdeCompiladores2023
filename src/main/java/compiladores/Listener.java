@@ -2,6 +2,7 @@ package compiladores;
 
 import java.util.LinkedList;
 
+
 import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
 import compiladores.compiladoresParser.CompoundInstructionContext;
@@ -20,6 +21,7 @@ import compiladores.compiladoresParser.StatementContext;
 import compiladores.compiladoresParser.StatementsTypesContext;
 import compiladores.compiladoresParser.WhileStatementContext;
 import compiladores.compiladoresParser.IfStatementContext;
+import compiladores.compiladoresParser.InstructionContext;
 import compiladores.compiladoresParser.ParametersPrototypeContext;
 
 
@@ -51,16 +53,7 @@ public class Listener extends compiladoresBaseListener{
         //symbolTable.printSymbolTable();
         symbolTable.printSymbolTableToFile(filePath);
         
-        //Unused variables and functions
-        if(!symbolTable.getUnusedID().isEmpty())
-            System.out.println("Warning: Unused " + symbolTable.getUnusedID()); 
- 
-        //The prototypes defined in this context lose their scope, therefore it is verified if they were
-        // used and not initialized
-        if(!symbolTable.getUsedUninitialized().isEmpty()) 
-            throw new RuntimeException("error: undefined reference to '" + symbolTable.getUsedUninitialized().get(0) + "'");
-
-        symbolTable.delContext();
+        deleteContext();
         //System.out.println("------------->Compilation ends<-------------");
     }
 
@@ -121,19 +114,7 @@ public class Listener extends compiladoresBaseListener{
                 throw new RuntimeException("error: control reaches end of non-void function [-Wreturn-type]");
         }
 
-        //symbolTable.printSymbolTable();
-        symbolTable.printSymbolTableToFile(filePath);
-        
-        //Unused variables and functions
-        if(!symbolTable.getUnusedID().isEmpty())
-            System.out.println("Warning: Unused " + symbolTable.getUnusedID()); 
- 
-        //The prototypes defined in this context lose their scope, therefore it is verified if they were
-        // used and not initialized
-        if(!symbolTable.getUsedUninitialized().isEmpty()) 
-            throw new RuntimeException("error: undefined reference to '" + symbolTable.getUsedUninitialized().get(0) + "'");
-    
-        symbolTable.delContext();
+        deleteContext();
     }
 
 
@@ -351,10 +332,42 @@ public class Listener extends compiladoresBaseListener{
     @Override
     public void enterElseIfStatement(ElseIfStatementContext ctx) {
         symbolTable.addContext();
-    }    
+    }
 
-    
+    /**
+     * Exit instruction rule. If the instruction is a compound instruction it does nothing (it already has its particular rule).
+     *  If it is not and it is a statement coming from an if, else, for or while then it eliminates the context.
+     *  
+     */
+    @Override
+    public void exitInstruction(InstructionContext ctx) {
 
+        if(!(ctx.getChild(0) instanceof CompoundInstructionContext)) {
+
+            if (ctx.getParent() instanceof ForStatementContext | ctx.getParent() instanceof IfStatementContext  |
+                ctx.getParent() instanceof ElseIfStatementContext  | ctx.getParent() instanceof WhileStatementContext)  
+                deleteContext();
+            
+        }
+    }
+
+    /**
+     * Delete context. Logs the symbol table, checks for unused variables and uninitialized used functions.
+     */
+    public void deleteContext() {
+
+        symbolTable.printSymbolTableToFile(filePath);
+        //Unused variables and functions
+        if(!symbolTable.getUnusedID().isEmpty())
+            System.out.println("Warning: Unused " + symbolTable.getUnusedID()); 
+ 
+        //The prototypes defined in this context lose their scope, therefore it is verified if they were
+        // used and not initialized
+        if(!symbolTable.getUsedUninitialized().isEmpty()) 
+            throw new RuntimeException("error: undefined reference to '" + symbolTable.getUsedUninitialized().get(0) + "'");
+
+        symbolTable.delContext();
+    }
     
 }
 

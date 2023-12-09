@@ -5,24 +5,25 @@ char printf(char c) {
 
 int main(int arg) {
     
-    if(arg > 3) {
+    if(arg > 3)
         printf('a');
-    }
+    
+    
     else if(arg < 2){
-        int d;
-        return arg;
-
+        int d = 4;
+        return arg + d;
     }
     
-    else{
-
-    }
+    else
+        printf('c');
     
     int y;
     while(arg >= 0) {
+        char j = 'd';
         for(int i = 0; i < 10; i++){
             int x = 3;
             y = x*i;
+            printf(j);
         }
 
         arg--;
