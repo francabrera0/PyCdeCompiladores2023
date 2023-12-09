@@ -29,14 +29,15 @@ MUL : '*';
 DIV : '/';
 AND : '&&';
 OR : '||';
-EQUALS : '==';
-NOT_EQUALS : '!=';
-LESS_THAN : '<';
-LESS_OR_EQUALS_THAN : '<=';
-GREATER_THAN : '>';
-GREATER_OR_EQUALS_THAN : '>=';
+EQ : '==';
+NEQ : '!=';
+LT : '<';
+LEQ : '<=';
+GT : '>';
+GET : '>=';
 
 INCDECOPERATORS : (ADD ADD | SUB SUB);
+
 
 RETURN : 'return';
 IF : 'if';
@@ -49,6 +50,7 @@ TYPE : (INT | DOUBLE | CHAR | VOID);
 ID : (LETTER | '_')(LETTER | DIGIT | '_')*;
 NUMBER : DIGIT+ ;
 WS : [ \n\t\r] -> skip;
+ 
 OTHER : . ;
 /*end lexical rules*/
 
@@ -127,8 +129,10 @@ assignment : ID EQUAL logicalArithmeticExpression;
  *
  * @brief:
  */
-logicalArithmeticExpression : arithmeticExpression
+logicalArithmeticExpression : arithmeticExpression 
                             | logicalExpression 
+                            | arithmeticExpression (AND | OR | EQ | NEQ | LT | GT |LEQ | GET) logicalExpression
+                            | logicalExpression (AND | OR | EQ | NEQ | LT | GT |LEQ | GET) arithmeticExpression
                             ;
 
 
@@ -190,12 +194,12 @@ lt : AND logicalTerm lt
    |
    ;
 
-lf : EQUALS logicalTerm lf
-   | NOT_EQUALS logicalTerm lf
-   | LESS_THAN logicalTerm lf
-   | LESS_OR_EQUALS_THAN logicalTerm lf
-   | GREATER_THAN logicalTerm lf
-   | GREATER_OR_EQUALS_THAN logicalTerm lf
+lf : EQ logicalTerm lf
+   | NEQ logicalTerm lf
+   | LT logicalTerm lf
+   | LEQ logicalTerm lf
+   | GT logicalTerm lf
+   | GET logicalTerm lf
    |
    ;
 

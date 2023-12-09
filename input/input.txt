@@ -1,29 +1,33 @@
-int sum(int, int);
-
-int main() {
-
-    int b = 3;
-    int a = 0;
-    for(int i = 0; i<10; i++) {
-        int c = sum(i,b);
-        c = c+2;
-    }
-
-    while(b < 10) {
-        int a = 0;
-        int s = 0;
-        a = a+s;
-    }
-
-    if(a>b) {
-        int m = 0; 
-        a = m;
-    }
-
-    return 0;
+char printf(char c) {
+    char imprimo = c;
+    return imprimo;
 }
 
-int sum(int a, int b){
-    int result = a + b;
-    return result;
+int main(int arg) {
+    
+    if(arg > 3) {
+        printf(1);
+    }
+    else if(arg < 2){
+        return arg;
+
+    }
+    
+    else{
+
+    }
+    
+    int y;
+    while(arg >= 0) {
+        for(int i = 0; i < 10; i++){
+            int x = 3;
+            y = x*i;
+        }
+
+        arg--;
+    }
+
+    printf(y);
+
+    return 0;
 }

@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
 import compiladores.compiladoresParser.CompoundInstructionContext;
+import compiladores.compiladoresParser.ElseIfStatementContext;
 import compiladores.compiladoresParser.FactorContext;
 import compiladores.compiladoresParser.ForStatementContext;
 import compiladores.compiladoresParser.FunctionCallContext;
@@ -342,7 +343,17 @@ public class Listener extends compiladoresBaseListener{
     @Override
     public void enterIfStatement(IfStatementContext ctx) {
         symbolTable.addContext();
+    }
+
+    /**
+     * Enter else if rule. Add new local context.
+     */
+    @Override
+    public void enterElseIfStatement(ElseIfStatementContext ctx) {
+        symbolTable.addContext();
     }    
+
+    
 
     
 }
