@@ -6,9 +6,10 @@ char printf(char c) {
 int main(int arg) {
     
     if(arg > 3) {
-        printf(1);
+        printf('a');
     }
     else if(arg < 2){
+        int d;
         return arg;
 
     }

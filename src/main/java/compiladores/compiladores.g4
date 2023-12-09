@@ -7,6 +7,7 @@ package compiladores;
 /*Begin fragments*/
 fragment LETTER : [A-Za-z];
 fragment DIGIT : [0-9];
+fragment PRINTABLE_ASCCI : [ -~];
 fragment INT : 'int';
 fragment CHAR : 'char';
 fragment DOUBLE : 'double';
@@ -49,6 +50,7 @@ TYPE : (INT | DOUBLE | CHAR | VOID);
 
 ID : (LETTER | '_')(LETTER | DIGIT | '_')*;
 NUMBER : DIGIT+ ;
+CHARACTER : '\'' PRINTABLE_ASCCI '\'';
 WS : [ \n\t\r] -> skip;
  
 OTHER : . ;
@@ -160,6 +162,7 @@ at : ADD arithmeticTerm at
    ;
 
 factor : NUMBER
+       | CHARACTER
        | ID
        | PARENTHESES_O logicalArithmeticExpression PARENTHESES_C
        | incDec
