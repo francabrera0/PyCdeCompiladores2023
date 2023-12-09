@@ -9,10 +9,15 @@ int main() {
         c = c+2;
     }
 
-    while(a < 10) {
+    while(b < 10) {
         int a = 0;
         int s = 0;
         a = a+s;
+    }
+
+    if(a>b) {
+        int m = 0; 
+        a = m;
     }
 
     return 0;

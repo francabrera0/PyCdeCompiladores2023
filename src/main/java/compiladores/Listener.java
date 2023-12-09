@@ -18,6 +18,7 @@ import compiladores.compiladoresParser.ReturnStatementContext;
 import compiladores.compiladoresParser.StatementContext;
 import compiladores.compiladoresParser.StatementsTypesContext;
 import compiladores.compiladoresParser.WhileStatementContext;
+import compiladores.compiladoresParser.IfStatementContext;
 import compiladores.compiladoresParser.ParametersPrototypeContext;
 
 
@@ -332,6 +333,14 @@ public class Listener extends compiladoresBaseListener{
      */
     @Override
     public void enterWhileStatement(WhileStatementContext ctx) {
+        symbolTable.addContext();
+    }
+    
+    /**
+     * Enter if rule. Add new local context.
+     */
+    @Override
+    public void enterIfStatement(IfStatementContext ctx) {
         symbolTable.addContext();
     }    
 
