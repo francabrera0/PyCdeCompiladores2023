@@ -50,9 +50,6 @@ public class Listener extends compiladoresBaseListener{
     @Override
     public void exitProgram(ProgramContext ctx) {
         
-        //symbolTable.printSymbolTable();
-        symbolTable.printSymbolTableToFile(filePath);
-        
         deleteContext();
         //System.out.println("------------->Compilation ends<-------------");
     }
