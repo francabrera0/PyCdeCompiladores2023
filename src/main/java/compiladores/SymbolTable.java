@@ -145,9 +145,7 @@ public class SymbolTable {
         File archivo = new File(filePath);
         
         if (archivo.exists()) {
-            if (archivo.delete()) {
-                System.out.println("The file has been deleted.");
-            } else {
+            if (!archivo.delete()) {
                 System.out.println("The file has not been deleted.");
             }
         }

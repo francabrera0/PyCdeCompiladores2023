@@ -6,9 +6,11 @@ int main() {
     int a = 0;
     for(int i = 0; i<10; i++) {
         int c = sum(i,b);
+        c = c+2;
     }
 
     while(a < 10) {
+        int a = 0;
         int s = 0;
         a = a+s;
     }

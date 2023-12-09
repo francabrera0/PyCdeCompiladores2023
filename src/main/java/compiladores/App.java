@@ -27,10 +27,18 @@ public class App {
 
         // Solicito al parser que comience indicando una regla gramatical
         // En este caso la regla es el simbolo inicial
-        parser.program();
+        try {
+            parser.program();
+            System.out.println("Compile finish");
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
+
+        
         //ParseTree tree =  parser.program();
 
-        System.out.println("\n\nParser finished");
+        
 
         // Conectamos el visitor
         //Visitor visitor = new Visitor();

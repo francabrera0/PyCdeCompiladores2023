@@ -22,86 +22,88 @@ import compiladores.compiladoresParser.ParametersPrototypeContext;
 
 
 public class Listener extends compiladoresBaseListener{
+
     private SymbolTable symbolTable = SymbolTable.getInstanceOf();
     String filePath = "./symbolTable.log";
     
 
     /**
-     * Esta es la regla inicial, al ingresar debo crear un nuevo contexto, este corresponde 
-     * al contexto global.
+     * Enter initial rule. Global context is added.
+     * 
      */
     @Override
     public void enterProgram(ProgramContext ctx) {
         symbolTable.deleteFile(filePath);
-        System.out.println("------------>Compilation begins<------------");
+        
+        //System.out.println("------------>Compilation begins<------------");
         symbolTable.addContext();
     }
     
     /**
-     * Al salir del programa elimino el contexto global.
+     * Exit initial rule. Global context is deleted.
+     *  It checks for unused variables or uninitialized used functions (prototype without definition).
      */
     @Override
     public void exitProgram(ProgramContext ctx) {
         
-        symbolTable.printSymbolTable();
+        //symbolTable.printSymbolTable();
         symbolTable.printSymbolTableToFile(filePath);
         
-        //Verificar si hay funciones usadas no inicializadas.
-        
-        System.out.println("Unused: " + symbolTable.getUnusedID());
-        //Si desde acá llamo a una función que me diga si hay funciones usadas que no fueron inicializadas
-        //Debería funcionar ya que se termina el scope de la función acá.
-        System.out.println("Used uninitialized: " + symbolTable.getUsedUninitialized());
+        //Unused variables and functions
+        if(!symbolTable.getUnusedID().isEmpty())
+            System.out.println("Warning: Unused " + symbolTable.getUnusedID()); 
+ 
+        //The prototypes defined in this context lose their scope, therefore it is verified if they were
+        // used and not initialized
+        if(!symbolTable.getUsedUninitialized().isEmpty()) 
+            throw new RuntimeException("error: undefined reference to '" + symbolTable.getUsedUninitialized().get(0) + "'");
+
         symbolTable.delContext();
-        System.out.println("------------->Compilation ends<-------------");
+        //System.out.println("------------->Compilation ends<-------------");
     }
 
+
     /**
-     * Las instrucciones compuestas son las que se encuentran entre {}
-     * Al ingresar a esta regla, se crea un nuevo contexto. Se pueden dar diferentes casos:
-     *  - Si se entra a una instrucción compuesta desde una declaración de función, se deben
-     *      agregar los parámetros de la función al contexto local.
-     *  - Si viene de un for, debo agregar las definiciones que se hicieron en la declaración
-     *      del mismo.
+     * Enter compound instruction rule. 
+     *  In case this rule is entered from a function statement, a new context is added and all
+     *  function parameters are added to the function's local context.
      */
     @Override
     public void enterCompoundInstruction(CompoundInstructionContext ctx) {
         
-        //Verifico si viene de una declaración de función
         if(ctx.getParent() instanceof FunctionStatementContext) {
             symbolTable.addContext(); 
             Function function = (Function) symbolTable.searchSymbol(ctx.getParent().getChild(0).getChild(1).getText());
             LinkedList<Parameter> parameters = function.getArgs();
 
-            for (Parameter parameter : parameters) { //Agrego los parámetros de la función al contexto
+            for (Parameter parameter : parameters) {
                 Variable variable = new Variable(parameter.getName(), parameter.getDataType(), false, true);
                 symbolTable.addSymbol(variable);
             }
         }
-
     }
 
 
     /**
-     * Al salir de una compoundInstruction:
-     *  -Si viene de una definición de función chequeo el return
-     *  -Debo verificar si quedaron variables o funciones sin usar
-     *  -Elimino el contexto
+     * Exit compound instruction rule. 
+     *  - In case this rule is entered from a function statement, checks the return type of the function
+     *  - It checks for unused variables or uninitialized used functions (prototype without definition)
+     *  - Delete local context
+     *  
      */
     @Override
     public void exitCompoundInstruction(CompoundInstructionContext ctx) {
         
         
         if(ctx.getParent() instanceof FunctionStatementContext) {
-            //Obtengo el tipo de dato de retorno de la función
+            //Function return type
             DataType returnType =  DataType.getDataTypeFromString(ctx.getParent().getChild(0).getChild(0).getText());
             Boolean returnFlag = false;
 
             InstructionsContext instructions = ctx.instructions();
 
             while(instructions.getChildCount() != 0) {
-                
-                //Busco la instrucción de return
+                //Look for the return statement
                 if(instructions.instruction().getChild(0) instanceof ReturnStatementContext) {
                     returnFlag = true;
                     //System.out.println(instructions.instruction().getChild(0).getChild(1));
@@ -117,26 +119,27 @@ public class Listener extends compiladoresBaseListener{
                 throw new RuntimeException("error: control reaches end of non-void function [-Wreturn-type]");
         }
 
-        symbolTable.printSymbolTable();
+        //symbolTable.printSymbolTable();
         symbolTable.printSymbolTableToFile(filePath);
-        //Ver como manejo los warnings de las variables o funciones sin usar.
-        System.out.println("Unused: " + symbolTable.getUnusedID());
-
-        //Si desde acá llamo a una función que me diga si hay funciones usadas que no fueron inicializadas
-        //Debería funcionar ya que se termina el scope de la función acá.
-        System.out.println("Used uninitialized: " + symbolTable.getUsedUninitialized());
+        
+        //Unused variables and functions
+        if(!symbolTable.getUnusedID().isEmpty())
+            System.out.println("Warning: Unused " + symbolTable.getUnusedID()); 
+ 
+        //The prototypes defined in this context lose their scope, therefore it is verified if they were
+        // used and not initialized
+        if(!symbolTable.getUsedUninitialized().isEmpty()) 
+            throw new RuntimeException("error: undefined reference to '" + symbolTable.getUsedUninitialized().get(0) + "'");
+    
         symbolTable.delContext();
     }
 
 
     /**
-     * Agrego una nueva función al contexto. Se agrega el ID de la función.
-     * Por ejemplo:
-     * int sum(int a, int b) {
-     *  return a+b;
-     * }
-     * Se agrega la función sum (con su tipo y parámetros) al contexto actual.
-     * Luego cuando se encuentra el {} se crea un nuevo contexto local de la función.
+     * Exit function declaration rule. A new function is created.
+     *  - If the function does not have a prototype, the function is added to the current context.
+     *  - If the function has a prototype, it is verified that there are no inconsistencies. If 
+     *       everything is ok, function becomes initialized.
      */
     @Override
     public void exitFunctionDeclaration(FunctionDeclarationContext ctx) {
@@ -147,7 +150,7 @@ public class Listener extends compiladoresBaseListener{
 
         Function function = new Function(functionName, dataType, false, true);
     
-        //Agrego todos los parámetros de la función
+        //Add function parameters
         while(parameters.getChildCount() != 0){
             function.addArg(DataType.getDataTypeFromString(parameters.TYPE().getText()),
                             parameters.ID().getText());
@@ -158,7 +161,7 @@ public class Listener extends compiladoresBaseListener{
         }
 
         Function prototype = (Function) symbolTable.searchLocalSymbol(functionName);
-        //Si no tiene prototipo, entonces agrego la función al contexto actual
+        
         if(prototype == null) {
             if(functionName.equals("main"))
                 function.setUsed(true);
@@ -167,14 +170,13 @@ public class Listener extends compiladoresBaseListener{
         }
         
         else {
-            //Declaración con distinto tipo que el prototipo
+            //Different type
             if(function.getDataType() != prototype.getDataType())
                 throw new RuntimeException("error: conflicting types for ' " + functionName + "'");
-            //Diferentes argumentos en los argumentos
+            //Different parameters
             if(!function.compareArgs(prototype.getArgs()))
                 throw new RuntimeException("error: conflicting types for ' " + functionName + "'");
             
-            //Le agrega los argumentos al prototipo y lo pone como inicializado
             prototype.setArgs(function.getArgs());
             prototype.setInitialized(true);
         }
@@ -182,7 +184,9 @@ public class Listener extends compiladoresBaseListener{
 
     
     /**
-     * Agrega la el prototipo con sus argumentos de la función al contexto actual.
+     * Exit function prototype rule. 
+     *  - If it is not a redefinition, add the prototype to the current context.
+     * 
      */
     @Override
     public void exitFunctionPrototype(FunctionPrototypeContext ctx) {
@@ -210,15 +214,16 @@ public class Listener extends compiladoresBaseListener{
 
     }
 
+
     /**
-     * Cada variable declarada se agrega al contexto actual. Contempla las inicializadas y 
-     * no inicializadas. Verifica la re definición local de variables.
-     * Caso de ejemplo: int a, b=12, c;
+     * Exit statement rule (i.e. int a, b=12, c=2;)
+     *  - Each declared variable is added to the current context. Consider whether they are initialized or not.
+     *  - Checks that is not a redefinition
      */
     @Override
     public void exitStatement(StatementContext ctx) {
 
-        DataType statementDataType = DataType.getDataTypeFromString(ctx.TYPE().getText()); //Todas tendrán el mismo tipo
+        DataType statementDataType = DataType.getDataTypeFromString(ctx.TYPE().getText()); //All variables have the same type
         StatementsTypesContext statementsTypes = ctx.statementsTypes();
 
         while(true) {
@@ -253,9 +258,11 @@ public class Listener extends compiladoresBaseListener{
         }        
     }
 
+
     /**
-     * Asignaciones, se debe chequear que la variable exista en algun contexto (local o superior).
-     * Si existe, se debe cambiar el inicializado a true.
+     * Exit assignment rule.
+     *  - Checks if the variable exists in some context (local o higher)
+     *  - Variable becomes initialized
      */
     @Override
     public void exitAssignment(AssignmentContext ctx) {
@@ -271,10 +278,11 @@ public class Listener extends compiladoresBaseListener{
         }
     }
 
+
     /**
-     * Los factores son los "operandos" de las expresiones aritmético lógicas. Si hay una variable
-     * como factor, entonces esta debe considerarse como usada. Antes debe verificarse que exista
-     * en cualquier contexto superior al actual (o el actual).
+     * Exit factor rule. Factors are the operands of logic arithmetic expressions.
+     *  - If a variable is a factor, then it should be considered as used.
+     *  - Checks if the variable is used uninitialized.
      */
     @Override
     public void exitFactor(FactorContext ctx) {
@@ -291,11 +299,11 @@ public class Listener extends compiladoresBaseListener{
         }
     }
 
+
     /**
-     * Salgo de una llamada a función. Debo verificar primero que exista.
-     *  Luego, si es un factor (está en una asignación del lado derecho) debo corroborar que no sea void
-     *  En este punto se le pone la función como usada, al terminar todo (exit program) debería ver si hay funciones
-     *  usadas pero no inicializadas.
+     * Exit function call rule. 
+     *  - Checks if the function already exists
+     *  - If the call function is a factor (appears on the right side of an assignment), it is checked to make sure it is not void.
      */
     @Override
     public void exitFunctionCall(FunctionCallContext ctx) {
@@ -311,11 +319,17 @@ public class Listener extends compiladoresBaseListener{
             throw new RuntimeException("error: implicit declaration of function " + ctx.ID().getText());
     }
 
+    /**
+     * Enter for rule. Add new local context.
+     */
     @Override
     public void enterForStatement(ForStatementContext ctx) {
         symbolTable.addContext();
     }
     
+    /**
+     * Enter while rule. Add new local context.
+     */
     @Override
     public void enterWhileStatement(WhileStatementContext ctx) {
         symbolTable.addContext();
