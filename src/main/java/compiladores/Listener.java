@@ -239,6 +239,14 @@ public class Listener extends compiladoresBaseListener{
     }
 
 
+    @Override
+    public void exitStatementsTypes(StatementsTypesContext ctx) {
+        System.out.println("ctx.getText()");
+    }
+    
+
+
+
     /**
      * Exit assignment rule.
      *  - Checks if the variable exists in some context (local o higher)
@@ -365,6 +373,7 @@ public class Listener extends compiladoresBaseListener{
 
         symbolTable.delContext();
     }
+
     
 }
 

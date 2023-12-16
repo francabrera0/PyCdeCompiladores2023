@@ -32,7 +32,7 @@ public class App {
             System.out.println("Compile finish");
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
             System.exit(1);
         }
 

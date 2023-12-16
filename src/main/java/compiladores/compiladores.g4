@@ -82,6 +82,7 @@ instruction : compoundInstruction
             | ifStatement
             | whileStatement
             | forStatement
+            | functionCall SEMICOLON
             | logicalArithmeticExpression SEMICOLON
             | functionStatement
             | incDec SEMICOLON
@@ -337,9 +338,18 @@ parametersPrototype : TYPE ID
 functionCall : ID PARENTHESES_O callParameters PARENTHESES_C
              ;
 
-callParameters : factor 
-               | factor COMMA callParameters
+callParameters : parameter 
+               | parameter COMMA callParameters
                |
                ;
 
+parameter : NUMBER
+          | CHARACTER
+          | ID
+          | logicalArithmeticExpression
+          | incDec
+          | functionCall
+          | assignment
+          ;
 /*end syntactic rules*/
+
