@@ -262,7 +262,7 @@ public class Listener extends compiladoresBaseListener{
 
     /**
      * Exit factor rule. Factors are the operands of logic arithmetic expressions.
-     *  - If a variable is a factor, then it should be considered as used.
+     *  - If a factor is a variable or increment/decrement, then it should be considered as used.
      *  - Checks if the variable is used uninitialized.
      */
     @Override
@@ -283,15 +283,19 @@ public class Listener extends compiladoresBaseListener{
 
             if(id != null) {
                 if(!id.getInitialized())
-                    System.out.println("warning: '" + ctx.ID().getText() + "' is used uninitialized");
+                    System.out.println("warning: '" + ctx.incDec().ID().getText() + "' is used uninitialized");
                 id.setUsed(true);
             }
             else
-                throw new RuntimeException("error: '" + ctx.ID().getText() + "' undeclared (first use in this function)");
+                throw new RuntimeException("error: '" + ctx.incDec().ID().getText() + "' undeclared (first use in this function)");
         }
     }
 
-
+    /**
+     * Exit parameter rule.
+     *  - If a parameter is a variable or increment/decrement, then it should be considered as used.
+     *  - Checks if the variable is used uninitialized.
+     */
     @Override
     public void exitParameter(ParameterContext ctx) {
         if(ctx.ID() != null) {
@@ -310,11 +314,11 @@ public class Listener extends compiladoresBaseListener{
 
             if(id != null) {
                 if(!id.getInitialized())
-                    System.out.println("warning: '" + ctx.ID().getText() + "' is used uninitialized");
+                    System.out.println("warning: '" + ctx.incDec().ID().getText() + "' is used uninitialized");
                 id.setUsed(true);
             }
             else
-                throw new RuntimeException("error: '" + ctx.ID().getText() + "' undeclared (first use in this function)");
+                throw new RuntimeException("error: '" + ctx.incDec().ID().getText() + "' undeclared (first use in this function)");
         }
     }
 

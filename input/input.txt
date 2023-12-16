@@ -12,7 +12,8 @@ int main()
     int operand1 = 0, operand2 = 0;
 
     int result = suma(operand1, operand2);
-
+    int s = 0;
+    s++;
     if(result > 5)
         printf('5');
     else if(result > 3)
