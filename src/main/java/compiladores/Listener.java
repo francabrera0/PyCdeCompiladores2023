@@ -14,6 +14,7 @@ import compiladores.compiladoresParser.FunctionDeclarationContext;
 import compiladores.compiladoresParser.FunctionPrototypeContext;
 import compiladores.compiladoresParser.FunctionStatementContext;
 import compiladores.compiladoresParser.InstructionsContext;
+import compiladores.compiladoresParser.ParameterContext;
 import compiladores.compiladoresParser.ParametersContext;
 import compiladores.compiladoresParser.ProgramContext;
 import compiladores.compiladoresParser.ReturnStatementContext;
@@ -239,14 +240,6 @@ public class Listener extends compiladoresBaseListener{
     }
 
 
-    @Override
-    public void exitStatementsTypes(StatementsTypesContext ctx) {
-        System.out.println("ctx.getText()");
-    }
-    
-
-
-
     /**
      * Exit assignment rule.
      *  - Checks if the variable exists in some context (local o higher)
@@ -274,8 +267,19 @@ public class Listener extends compiladoresBaseListener{
      */
     @Override
     public void exitFactor(FactorContext ctx) {
-        if(ctx.ID() != null){
+        if(ctx.ID() != null) {
             ID id = symbolTable.searchSymbol(ctx.ID().getText());
+
+            if(id != null) {
+                if(!id.getInitialized())
+                    System.out.println("warning: '" + ctx.ID().getText() + "' is used uninitialized");
+                id.setUsed(true);
+            }
+            else
+                throw new RuntimeException("error: '" + ctx.ID().getText() + "' undeclared (first use in this function)");
+        }
+        else if(ctx.incDec() != null) {
+            ID id = symbolTable.searchSymbol(ctx.incDec().ID().getText());
 
             if(id != null) {
                 if(!id.getInitialized())
@@ -287,6 +291,32 @@ public class Listener extends compiladoresBaseListener{
         }
     }
 
+
+    @Override
+    public void exitParameter(ParameterContext ctx) {
+        if(ctx.ID() != null) {
+            ID id = symbolTable.searchSymbol(ctx.ID().getText());
+
+            if(id != null) {
+                if(!id.getInitialized())
+                    System.out.println("warning: '" + ctx.ID().getText() + "' is used uninitialized");
+                id.setUsed(true);
+            }
+            else
+                throw new RuntimeException("error: '" + ctx.ID().getText() + "' undeclared (first use in this function)");
+        }
+        else if(ctx.incDec() != null) {
+            ID id = symbolTable.searchSymbol(ctx.incDec().ID().getText());
+
+            if(id != null) {
+                if(!id.getInitialized())
+                    System.out.println("warning: '" + ctx.ID().getText() + "' is used uninitialized");
+                id.setUsed(true);
+            }
+            else
+                throw new RuntimeException("error: '" + ctx.ID().getText() + "' undeclared (first use in this function)");
+        }
+    }
 
     /**
      * Exit function call rule. 
