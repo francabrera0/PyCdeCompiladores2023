@@ -11,7 +11,7 @@ int main()
 {
     int operand1 = 0, operand2 = 0;
 
-    int result = suma(operand1, operand2);
+    int result = suma(suma(operand1, 5), operand2);
     int s = 0;
     s++;
     if(result > 5)

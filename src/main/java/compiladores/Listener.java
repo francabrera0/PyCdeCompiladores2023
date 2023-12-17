@@ -15,6 +15,7 @@ import compiladores.compiladoresParser.FunctionDeclarationContext;
 import compiladores.compiladoresParser.FunctionPrototypeContext;
 import compiladores.compiladoresParser.FunctionStatementContext;
 import compiladores.compiladoresParser.InstructionsContext;
+import compiladores.compiladoresParser.ParameterContext;
 import compiladores.compiladoresParser.ParametersContext;
 import compiladores.compiladoresParser.ProgramContext;
 import compiladores.compiladoresParser.ReturnStatementContext;
@@ -313,52 +314,54 @@ public class Listener extends compiladoresBaseListener{
             CallParametersContext callParameters = ctx.callParameters();
 
             while(callParameters.getChildCount() != 0){
-                
-                if (callParameters.parameter().NUMBER() != null) //Parameter is a number
+                ParameterContext parameter = callParameters.parameter();
+
+                if (parameter.NUMBER() != null) //Parameter is a number
                     parameters.add(DataType.INT);
                 
-                else if (callParameters.parameter().CHARACTER() != null) //Parameter is a character
+                else if (parameter.CHARACTER() != null) //Parameter is a character
                     parameters.add(DataType.CHAR);
                 
 
-                else if(callParameters.parameter().ID() != null) { //Parameter is a variable
-                    Variable variable = (Variable) symbolTable.searchSymbol(callParameters.parameter().ID().getText());
+                else if(parameter.ID() != null) { //Parameter is a variable
+                    String variableName = parameter.ID().getText();
+                    Variable variable = (Variable) symbolTable.searchSymbol(variableName);
                     if(variable != null) { //Variable exists
                         if(!variable.getInitialized())
-                            System.out.println("warning: '" + callParameters.parameter().ID().getText() + "' is used uninitialized");
+                            System.out.println("warning: '" + variableName + "' is used uninitialized");
                         variable.setUsed(true);
                     } 
                     else //Variable does not exist
-                        throw new RuntimeException("error: '" + callParameters.parameter().ID().getText() + "' undeclared (first use in this function)");
+                        throw new RuntimeException("error: '" + variableName + "' undeclared (first use in this function)");
                     
                     parameters.add(variable.getDataType());
                 }
 
-                else if(callParameters.parameter().incDec() != null) { //Parameter is a incDec
-                    Variable variable = (Variable) symbolTable.searchSymbol(callParameters.parameter().incDec().ID().getText());
+                else if(parameter.incDec() != null) { //Parameter is a incDec
+                    String variableName = parameter.incDec().ID().getText();
+                    Variable variable = (Variable) symbolTable.searchSymbol(variableName);
 
                     if(variable != null) { //Variable exists
                         if(!variable.getInitialized())
-                            System.out.println("warning: '" + callParameters.parameter().incDec().ID().getText() + "' is used uninitialized");
+                            System.out.println("warning: '" + variableName + "' is used uninitialized");
                         variable.setUsed(true);
                     }
                     else //Variable does not exist
-                        throw new RuntimeException("error: '" + callParameters.parameter().incDec().ID().getText() + "' undeclared (first use in this function)");
+                        throw new RuntimeException("error: '" + variableName + "' undeclared (first use in this function)");
 
                     parameters.add(DataType.INT);
                 }
 
-                else if(callParameters.parameter().functionCall() != null){ //Parameter is a function call
-                    Function functionParameter = (Function) symbolTable.searchSymbol(callParameters.parameter().functionCall().ID().getText()); //It does not check if the function exist because it is another function call 
+                else if(parameter.functionCall() != null){ //Parameter is a function call
+                    Function functionParameter = (Function) symbolTable.searchSymbol(parameter.functionCall().ID().getText()); //It does not check if the function exist because it is another function call 
                     parameters.add(functionParameter.getDataType());
                 }
 
-                else if(callParameters.parameter().logicalArithmeticExpression() != null)  //Parameter is an opal
+                else if(parameter.logicalArithmeticExpression() != null)  //Parameter is an opal
                     parameters.add(DataType.INT);
                 
-                else if(callParameters.parameter().assignment() != null) { //Parameter is an assignment
-                    Variable variable = (Variable) symbolTable.searchSymbol(callParameters.parameter().assignment().ID().getText());
-
+                else if(parameter.assignment() != null) { //Parameter is an assignment
+                    Variable variable = (Variable) symbolTable.searchSymbol(parameter.assignment().ID().getText());
                     parameters.add(variable.getDataType());
                 }
 
@@ -369,11 +372,8 @@ public class Listener extends compiladoresBaseListener{
                 
             }
 
-            if(!compareLists(parameters, expectedParameters)){
-                System.out.println("Error in parameters in function " + function.getName());
-                System.out.println("Obtained: " + parameters);
-                System.out.println("Expected: " + expectedParameters);
-            }
+            if(!compareLists(parameters, expectedParameters))
+                throw new RuntimeException("error: In function " + function.getName() + " invalid parameters\n Obtained: " + parameters + "\n Expected " + expectedParameters);
 
             function.setUsed(true);
         }

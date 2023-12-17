@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 public class App {
     public static void main(String[] args) throws Exception {
 
-        CharStream input = CharStreams.fromFileName("input/input.txt");
+        CharStream input = CharStreams.fromFileName("input/input.c");
 
         // create a lexer that feeds off of input CharStream
         compiladoresLexer lexer = new compiladoresLexer(input);
