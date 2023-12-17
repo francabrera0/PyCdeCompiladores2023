@@ -346,9 +346,9 @@ callParameters : parameter
 parameter : NUMBER
           | CHARACTER
           | ID
-          | logicalArithmeticExpression
-          | incDec
           | functionCall
+          | incDec
+          | logicalArithmeticExpression
           | assignment
           ;
 /*end syntactic rules*/

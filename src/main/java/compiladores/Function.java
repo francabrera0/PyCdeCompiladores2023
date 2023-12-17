@@ -51,6 +51,15 @@ public class Function extends ID {
         return this.args;
     }
 
+    public LinkedList<DataType> getDataTypeArgs() {
+        LinkedList <DataType> dataTypes = new LinkedList<DataType>();
+
+        for (Parameter parameter : this.args)
+            dataTypes.add(parameter.getDataType());
+        
+        return dataTypes;
+    }
+
     public void addArg(DataType arg, String name) {
         Parameter parameter = new Parameter(arg, name);
         args.add(parameter);

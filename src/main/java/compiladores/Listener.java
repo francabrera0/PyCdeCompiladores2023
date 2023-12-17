@@ -5,6 +5,7 @@ import java.util.LinkedList;
 
 import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
+import compiladores.compiladoresParser.CallParametersContext;
 import compiladores.compiladoresParser.CompoundInstructionContext;
 import compiladores.compiladoresParser.ElseIfStatementContext;
 import compiladores.compiladoresParser.FactorContext;
@@ -14,7 +15,6 @@ import compiladores.compiladoresParser.FunctionDeclarationContext;
 import compiladores.compiladoresParser.FunctionPrototypeContext;
 import compiladores.compiladoresParser.FunctionStatementContext;
 import compiladores.compiladoresParser.InstructionsContext;
-import compiladores.compiladoresParser.ParameterContext;
 import compiladores.compiladoresParser.ParametersContext;
 import compiladores.compiladoresParser.ProgramContext;
 import compiladores.compiladoresParser.ReturnStatementContext;
@@ -291,53 +291,93 @@ public class Listener extends compiladoresBaseListener{
         }
     }
 
-    /**
-     * Exit parameter rule.
-     *  - If a parameter is a variable or increment/decrement, then it should be considered as used.
-     *  - Checks if the variable is used uninitialized.
-     */
-    @Override
-    public void exitParameter(ParameterContext ctx) {
-        if(ctx.ID() != null) {
-            ID id = symbolTable.searchSymbol(ctx.ID().getText());
-
-            if(id != null) {
-                if(!id.getInitialized())
-                    System.out.println("warning: '" + ctx.ID().getText() + "' is used uninitialized");
-                id.setUsed(true);
-            }
-            else
-                throw new RuntimeException("error: '" + ctx.ID().getText() + "' undeclared (first use in this function)");
-        }
-        else if(ctx.incDec() != null) {
-            ID id = symbolTable.searchSymbol(ctx.incDec().ID().getText());
-
-            if(id != null) {
-                if(!id.getInitialized())
-                    System.out.println("warning: '" + ctx.incDec().ID().getText() + "' is used uninitialized");
-                id.setUsed(true);
-            }
-            else
-                throw new RuntimeException("error: '" + ctx.incDec().ID().getText() + "' undeclared (first use in this function)");
-        }
-    }
 
     /**
      * Exit function call rule. 
      *  - Checks if the function already exists
      *  - If the call function is a factor (appears on the right side of an assignment), it is checked to make sure it is not void.
+     *  - Checks if the parameters are correct
      */
     @Override
     public void exitFunctionCall(FunctionCallContext ctx) {
-        ID id = symbolTable.searchSymbol(ctx.ID().getText());
+        Function function = (Function) symbolTable.searchSymbol(ctx.ID().getText());
 
-        if(id != null){
-            if (ctx.getParent() instanceof FactorContext && id.getDataType() == DataType.VOID)
+        if(function != null) { //Function exists
+            if (ctx.getParent() instanceof FactorContext && function.getDataType() == DataType.VOID) //Function void as a factor
                 throw new RuntimeException("error: void value not ignored as it ought to be");
+            
+            LinkedList <DataType> expectedParameters = function.getDataTypeArgs();
+            
+            LinkedList <DataType> parameters = new LinkedList<>();
+
+            CallParametersContext callParameters = ctx.callParameters();
+
+            while(callParameters.getChildCount() != 0){
                 
-            id.setUsed(true);
+                if (callParameters.parameter().NUMBER() != null) //Parameter is a number
+                    parameters.add(DataType.INT);
+                
+                else if (callParameters.parameter().CHARACTER() != null) //Parameter is a character
+                    parameters.add(DataType.CHAR);
+                
+
+                else if(callParameters.parameter().ID() != null) { //Parameter is a variable
+                    Variable variable = (Variable) symbolTable.searchSymbol(callParameters.parameter().ID().getText());
+                    if(variable != null) { //Variable exists
+                        if(!variable.getInitialized())
+                            System.out.println("warning: '" + callParameters.parameter().ID().getText() + "' is used uninitialized");
+                        variable.setUsed(true);
+                    } 
+                    else //Variable does not exist
+                        throw new RuntimeException("error: '" + callParameters.parameter().ID().getText() + "' undeclared (first use in this function)");
+                    
+                    parameters.add(variable.getDataType());
+                }
+
+                else if(callParameters.parameter().incDec() != null) { //Parameter is a incDec
+                    Variable variable = (Variable) symbolTable.searchSymbol(callParameters.parameter().incDec().ID().getText());
+
+                    if(variable != null) { //Variable exists
+                        if(!variable.getInitialized())
+                            System.out.println("warning: '" + callParameters.parameter().incDec().ID().getText() + "' is used uninitialized");
+                        variable.setUsed(true);
+                    }
+                    else //Variable does not exist
+                        throw new RuntimeException("error: '" + callParameters.parameter().incDec().ID().getText() + "' undeclared (first use in this function)");
+
+                    parameters.add(DataType.INT);
+                }
+
+                else if(callParameters.parameter().functionCall() != null){ //Parameter is a function call
+                    Function functionParameter = (Function) symbolTable.searchSymbol(callParameters.parameter().functionCall().ID().getText()); //It does not check if the function exist because it is another function call 
+                    parameters.add(functionParameter.getDataType());
+                }
+
+                else if(callParameters.parameter().logicalArithmeticExpression() != null)  //Parameter is an opal
+                    parameters.add(DataType.INT);
+                
+                else if(callParameters.parameter().assignment() != null) { //Parameter is an assignment
+                    Variable variable = (Variable) symbolTable.searchSymbol(callParameters.parameter().assignment().ID().getText());
+
+                    parameters.add(variable.getDataType());
+                }
+
+                if (callParameters.getChildCount() == 3)
+                    callParameters = (CallParametersContext) callParameters.getChild(2);
+                else 
+                    break;
+                
+            }
+
+            if(!compareLists(parameters, expectedParameters)){
+                System.out.println("Error in parameters in function " + function.getName());
+                System.out.println("Obtained: " + parameters);
+                System.out.println("Expected: " + expectedParameters);
+            }
+
+            function.setUsed(true);
         }
-        else 
+        else //Function does not exist
             throw new RuntimeException("error: implicit declaration of function " + ctx.ID().getText());
     }
 
@@ -406,6 +446,20 @@ public class Listener extends compiladoresBaseListener{
             throw new RuntimeException("error: undefined reference to '" + symbolTable.getUsedUninitialized().get(0) + "'");
 
         symbolTable.delContext();
+    }
+
+    /** 
+     * Compare two lists.
+     */
+    public <T> Boolean compareLists(LinkedList <T> list1, LinkedList<T> list2) {
+        if(list1.size()!= list2.size())
+            return false;
+
+        for (int dataType = 0; dataType<list1.size(); dataType++)
+            if(list1.get(dataType) != list2.get(dataType)) 
+                return false;
+
+        return true;
     }
 
     

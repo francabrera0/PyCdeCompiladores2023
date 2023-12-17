@@ -3,7 +3,7 @@ package compiladores;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+// import org.antlr.v4.runtime.tree.ParseTree;
 
 public class App {
     public static void main(String[] args) throws Exception {
@@ -27,19 +27,20 @@ public class App {
 
         // Solicito al parser que comience indicando una regla gramatical
         // En este caso la regla es el simbolo inicial
-        ParseTree tree = null;
+        // ParseTree tree = null;
         try {
-            tree = parser.program(); //Árbol con anotaciones
+            // tree = parser.program(); //Árbol con anotaciones
+            parser.program(); //Árbol con anotaciones
             System.out.println("Compile finish");
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
-            //e.printStackTrace();
+            // e.printStackTrace();
             System.exit(1);
         }
 
         // Conectamos el visitor
-        Visitor visitor = new Visitor();
-        visitor.visit(tree); 
+        // Visitor visitor = new Visitor();
+        // visitor.visit(tree); 
 
         // System.out.println(visitor);
         // System.out.println(visitor.getErrorNodes());
