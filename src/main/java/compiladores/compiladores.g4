@@ -134,8 +134,6 @@ assignment : ID EQUAL logicalArithmeticExpression;
  */
 logicalArithmeticExpression : arithmeticExpression 
                             | logicalExpression 
-                            | arithmeticExpression (AND | OR | EQ | NEQ | LT | GT |LEQ | GET) logicalExpression
-                            | logicalExpression (AND | OR | EQ | NEQ | LT | GT |LEQ | GET) arithmeticExpression
                             ;
 
 
