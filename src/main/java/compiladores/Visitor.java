@@ -50,6 +50,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     private VariableGenerator variableGenerator;
     private LabelGenerator labelGenerator;
     private LinkedList<String> operands;
+    private LinkedList<String> incDecID;
 
     public Visitor() {
         treeAddressCode = "";
@@ -58,6 +59,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         variableGenerator = VariableGenerator.getInstanceOf();
         labelGenerator = LabelGenerator.getInstanceOf();
         operands = new LinkedList<>();
+        incDecID = new LinkedList<>();
     }
 
 
@@ -105,10 +107,11 @@ public class Visitor extends compiladoresBaseVisitor<String> {
      * Visita a los hijos ()
      * Tengo que trabajar con esta regla ahora para agregar los and or o cmp    
      * logicalExpression : logicalExpression AND logicalExpression
-                         | logicalExpression OR logicalExpression
-                         | arithmeticExpression CMP arithmeticExpression
-                         | arithmeticExpression
-                         ;
+     *                   | logicalExpression OR logicalExpression
+     *                   | arithmeticExpression CMP arithmeticExpression
+     *                   | arithmeticExpression
+     *                   ;
+     *      CODIGO REPETIDO EN CMP  
      */
     @Override
     public String visitLogicalExpression(LogicalExpressionContext ctx) {
@@ -139,45 +142,19 @@ public class Visitor extends compiladoresBaseVisitor<String> {
                 System.out.println("AND/OR");
             }
 
-            else { //CMP
-                visitArithmeticExpression(ctx.arithmeticExpression(0));
-                
-                if(preOrPost == 1) //pre
-                    treeAddressCode += incDecInstruction;
+            else { //CMP solo permite comparar 2 aritmeticas
+
+                visitArithmeticExpression(ctx.arithmeticExpression(0));//Cuando retorna tiene en operands el resultado
+
+                visitArithmeticExpression(ctx.arithmeticExpression(1)); //Cuando retorna vuelve con el resultado
         
-                String newVariable = variableGenerator.getNewVariable();
-                treeAddressCode += "\n" + newVariable + " = " + operands.pop(); 
-
-                if(preOrPost == 2) //post
-                    treeAddressCode+= incDecInstruction;
-
-                preOrPost = 0;
-                incDecInstruction = "";
-
-                operands.push(newVariable);
-
-                visitArithmeticExpression(ctx.arithmeticExpression(1));
-                if(preOrPost == 1) //pre
-                    treeAddressCode += incDecInstruction;
-        
-                newVariable = variableGenerator.getNewVariable();
-                treeAddressCode += "\n" + newVariable + " = " + operands.pop(); 
-
-                if(preOrPost == 2) //post
-                    treeAddressCode+= incDecInstruction;
-
-                preOrPost = 0;
-                incDecInstruction = "";
-
-                operands.push(newVariable);
-
-                newVariable = variableGenerator.getNewVariable();
+                String newVariable = variableGenerator.getNewVariable(); //Variable en la que se guard la comp
 
                 String secondOperand = operands.pop();
                 String firstOperand = operands.pop();
 
                 treeAddressCode += "\n" + newVariable + " = " +  firstOperand + ctx.getChild(1).getText() + secondOperand;
-                operands.push(newVariable);
+                operands.push(newVariable); //Pongo en operands la variable de la comp
             }
         }
 
@@ -186,10 +163,26 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
     /**
      * Visita a los hijos de la expAritmetica, esots son aritmeticTerm y at.
+     * Aca lo que hago es poner en una nueva var el resultado de la expresion.
      */
     @Override
     public String visitArithmeticExpression(ArithmeticExpressionContext ctx) {
         visitChildren(ctx);
+        String newVariable = variableGenerator.getNewVariable();
+        
+        if(preOrPost == 1) //pre
+            treeAddressCode += incDecInstruction;
+        
+        treeAddressCode += "\n" + newVariable + " = " + operands.pop(); 
+
+        if(preOrPost == 2) //post
+            treeAddressCode+= incDecInstruction;
+
+        preOrPost = 0;
+        incDecInstruction = "";
+
+        operands.push(newVariable); 
+
         return treeAddressCode;
     }
     
@@ -254,6 +247,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             incDecInstruction += " - 1";
 
         operands.push(id);
+        incDecID.push(id);
         return treeAddressCode;
     }
 
@@ -285,24 +279,31 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             return treeAddressCode;
         }
         
-        if(preOrPost == 1) //pre
+        String secondOperand = operands.pop();
+        String newVariable = variableGenerator.getNewVariable();
+        String operator = ctx.getChild(0).getText();
+        Boolean incDec = false;
+
+        if(preOrPost!= 0){
+            String s = incDecID.pop();
+            if(s.equals(firstOperand) || s.equals(secondOperand))
+                incDec = true;
+            else
+                incDecID.push(s);
+        } 
+
+        if(preOrPost == 1 && incDec) //pre
             treeAddressCode += incDecInstruction;
         
-        String newVariable = variableGenerator.getNewVariable();
+        treeAddressCode += "\n" + newVariable + " = " + firstOperand + operator + secondOperand; 
 
-        treeAddressCode += "\n" + newVariable + " = " + firstOperand; 
-
-        if(ctx.getChild(0) != null){ //Mul or Div
-            treeAddressCode += ctx.getChild(0).getText();
-        }
-
-        treeAddressCode += operands.pop(); //SecondOperand
-
-        if(preOrPost == 2) //post
+        if(preOrPost == 2 && incDec) //post
             treeAddressCode+= incDecInstruction;
 
-        preOrPost = 0;
-        incDecInstruction = "";
+        if(incDec) {
+            preOrPost = 0;
+            incDecInstruction = "";
+        }
 
         operands.push(newVariable);
 
@@ -333,25 +334,33 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             return treeAddressCode;
         }
         
-        if(preOrPost == 1) //pre
+        String secondOperand = operands.pop();
+        String newVariable = variableGenerator.getNewVariable();
+        String operator = ctx.getChild(0).getText();
+
+        Boolean incDec = false;
+
+        if(preOrPost!= 0){
+            String s = incDecID.pop();
+            if(s.equals(firstOperand) || s.equals(secondOperand))
+                incDec = true;
+            else
+                incDecID.push(s);
+        } 
+
+        if(preOrPost == 1 && incDec) //pre
             treeAddressCode += incDecInstruction;
         
-        String newVariable = variableGenerator.getNewVariable();
 
-        treeAddressCode += "\n" + newVariable + " = " + firstOperand; 
+        treeAddressCode += "\n" + newVariable + " = " + firstOperand + operator + secondOperand; 
 
-        if(ctx.getChild(0) != null){
-            treeAddressCode += ctx.getChild(0).getText();
-        }
-
-        treeAddressCode += operands.pop();
-
-        if(preOrPost == 2) //post
+        if(preOrPost == 2 && incDec) //post
             treeAddressCode+= incDecInstruction;
 
-        preOrPost = 0;
-        incDecInstruction = "";
-
+        if(incDec) {
+            preOrPost = 0;
+            incDecInstruction = "";
+        }
         operands.push(newVariable);
 
         if(ctx.at().at() != null)
