@@ -92,8 +92,23 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     @Override
     public String visitLogicalExpression(LogicalExpressionContext ctx) {
                 
-        if(ctx.getChild(1) == null) { //En este caso es unicamente una opal.
+        if(ctx.getChild(1) == null) { //En este caso es unicamente una opal. Creo una nuev var
             visitArithmeticExpression(ctx.arithmeticExpression(0)); 
+
+            String newVariable = variableGenerator.getNewVariable();
+            
+            if(preOrPost == 1) //pre
+                treeAddressCode += incDecInstruction;
+            
+            treeAddressCode += "\n" + newVariable + " = " + operands.pop(); 
+
+            if(preOrPost == 2) //post
+                treeAddressCode+= incDecInstruction;
+
+            preOrPost = 0;
+            incDecInstruction = "";
+
+            operands.push(newVariable); 
         }
         else {
             if(ctx.getChild(1).getText().equals("&&") || ctx.getChild(1).getText().equals("||")) { //AND/OR
@@ -149,22 +164,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     @Override
     public String visitArithmeticExpression(ArithmeticExpressionContext ctx) {
         visitChildren(ctx);
-
-        String newVariable = variableGenerator.getNewVariable();
-        
-        if(preOrPost == 1) //pre
-            treeAddressCode += incDecInstruction;
-        
-        treeAddressCode += "\n" + newVariable + " = " + operands.pop(); 
-
-        if(preOrPost == 2) //post
-            treeAddressCode+= incDecInstruction;
-
-        preOrPost = 0;
-        incDecInstruction = "";
-
-        operands.push(newVariable); 
-
         return treeAddressCode;
     }
     
