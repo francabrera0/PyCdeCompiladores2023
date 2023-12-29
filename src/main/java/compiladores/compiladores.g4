@@ -132,16 +132,8 @@ logicalArithmeticExpression : logicalExpression
 /*
  * Logical expressions
  *
- * @brief: An logical expression is a series of logical terms sepparated by '&&' or '||'.
- *         Each of the terms is composed of a series of factors that can be compared with different operators (>,>=,<,<=,==,!=).
- *         Factors can be:
- *          - A number
- *          - A variable name (ID)
- *          - Another arithmetic expression
- *          - A pre/post increment/deecrement
- *          - A function call
- *
- *           example: a < b && a != 2 
+ * @brief: A logical expression can be a logical and/or between two logical expressions (the logical AND has higher priority), 
+ *          a comparison between arithmetic expressions, or an arithmetic expression.
  */
 logicalExpression : logicalExpression AND logicalExpression
                   | logicalExpression OR logicalExpression
