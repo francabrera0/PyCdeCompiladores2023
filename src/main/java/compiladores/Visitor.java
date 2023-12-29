@@ -105,16 +105,18 @@ public class Visitor extends compiladoresBaseVisitor<String> {
      * Visita a los hijos ()
      * Tengo que trabajar con esta regla ahora para agregar los and or o cmp    
      * logicalExpression : logicalExpression AND logicalExpression
-                  | logicalExpression OR logicalExpression
-                  | arithmeticExpression CMP arithmeticExpression
-                  | arithmeticExpression
-                  ;
+                         | logicalExpression OR logicalExpression
+                         | arithmeticExpression CMP arithmeticExpression
+                         | arithmeticExpression
+                         ;
      */
     @Override
     public String visitLogicalExpression(LogicalExpressionContext ctx) {
-        visitChildren(ctx);
+                
         if(ctx.getChild(1) == null) { //En este caso es unicamente una opal.
 
+            visitArithmeticExpression(ctx.arithmeticExpression(0));
+            
             if(preOrPost == 1) //pre
                 treeAddressCode += incDecInstruction;
         
@@ -130,6 +132,27 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
             operands.push(newVariable);
 
+        }
+
+        else {
+            if(ctx.getChild(1).getText().equals("AND") || ctx.getChild(1).getText().equals("OR")) { //AND/OR
+                System.out.println("AND/OR");
+            }
+
+            else { //CMP
+                visitArithmeticExpression(ctx.arithmeticExpression(0));
+                String firstOperand = operands.pop();
+
+                visitArithmeticExpression(ctx.arithmeticExpression(1));
+                String secondOperand = operands.pop();
+
+                String newVariable = variableGenerator.getNewVariable();
+                treeAddressCode += "\n" + newVariable + " = " + firstOperand ;   
+                treeAddressCode += ctx.getChild(1).getText();
+                treeAddressCode += secondOperand;
+
+                operands.push(newVariable);
+            }
         }
 
         return treeAddressCode;
