@@ -135,22 +135,48 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         }
 
         else {
-            if(ctx.getChild(1).getText().equals("AND") || ctx.getChild(1).getText().equals("OR")) { //AND/OR
+            if(ctx.getChild(1).getText().equals("&&") || ctx.getChild(1).getText().equals("||")) { //AND/OR
                 System.out.println("AND/OR");
             }
 
             else { //CMP
                 visitArithmeticExpression(ctx.arithmeticExpression(0));
-                String firstOperand = operands.pop();
+                
+                if(preOrPost == 1) //pre
+                    treeAddressCode += incDecInstruction;
+        
+                String newVariable = variableGenerator.getNewVariable();
+                treeAddressCode += "\n" + newVariable + " = " + operands.pop(); 
+
+                if(preOrPost == 2) //post
+                    treeAddressCode+= incDecInstruction;
+
+                preOrPost = 0;
+                incDecInstruction = "";
+
+                operands.push(newVariable);
 
                 visitArithmeticExpression(ctx.arithmeticExpression(1));
+                if(preOrPost == 1) //pre
+                    treeAddressCode += incDecInstruction;
+        
+                newVariable = variableGenerator.getNewVariable();
+                treeAddressCode += "\n" + newVariable + " = " + operands.pop(); 
+
+                if(preOrPost == 2) //post
+                    treeAddressCode+= incDecInstruction;
+
+                preOrPost = 0;
+                incDecInstruction = "";
+
+                operands.push(newVariable);
+
+                newVariable = variableGenerator.getNewVariable();
+
                 String secondOperand = operands.pop();
+                String firstOperand = operands.pop();
 
-                String newVariable = variableGenerator.getNewVariable();
-                treeAddressCode += "\n" + newVariable + " = " + firstOperand ;   
-                treeAddressCode += ctx.getChild(1).getText();
-                treeAddressCode += secondOperand;
-
+                treeAddressCode += "\n" + newVariable + " = " +  firstOperand + ctx.getChild(1).getText() + secondOperand;
                 operands.push(newVariable);
             }
         }
