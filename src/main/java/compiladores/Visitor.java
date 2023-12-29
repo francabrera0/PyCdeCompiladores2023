@@ -131,7 +131,21 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
     @Override
     public String visitIncDec(IncDecContext ctx) {
-        System.out.println("Increment");
+        if(ctx.getChild(0).getText().contains("+") || ctx.getChild(0).getText().contains("-") ) //pre
+            preOrPost = 1;
+        else //post
+            preOrPost = 2;
+        System.out.println(ctx.getChild(0).getText());
+        String id = ctx.ID().getText();
+
+        incDecInstruction += "\n" + id + " = " + id;
+
+        if(ctx.INCDECOPERATORS().getText().equals("++"))
+            incDecInstruction += " + 1";
+        else
+            incDecInstruction += " - 1";
+
+        operands.push(id);
         return treeAddressCode;
     }
 
@@ -151,7 +165,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             visitFactor(ctx.factor());
         }
         
-
         if(preOrPost == 1) //pre
             treeAddressCode += incDecInstruction;
         
