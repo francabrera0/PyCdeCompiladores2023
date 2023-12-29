@@ -79,7 +79,6 @@ instruction : compoundInstruction
             | functionCall SEMICOLON
             | logicalArithmeticExpression SEMICOLON
             | functionStatement
-            | incDec SEMICOLON
             ;
 
 /*

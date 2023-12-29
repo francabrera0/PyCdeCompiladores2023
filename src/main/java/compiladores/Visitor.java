@@ -61,6 +61,9 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
 
 
+    /**
+     * Visita el programa, raiz del arbol completo
+     */
     @Override
     public String visitProgram(ProgramContext ctx) {
         visitChildren(ctx);
@@ -68,6 +71,9 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
     
+    /**
+     * Visita a los hijos, instruction e instructions(si mismo)
+     */
     @Override
     public String visitInstructions(InstructionsContext ctx) {
         visitChildren(ctx);
@@ -75,35 +81,83 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
     
+    /**
+     * Visita a los hijos (pueden ser compoundInstruction, statement, assignments,
+     *  returnStatement, ifStatement, whileStatement, forStatement, functionCall, 
+     *  logicalArithmeticExpression,functionStatement)
+     */
     @Override
     public String visitInstruction(InstructionContext ctx) {
         visitChildren(ctx);
         return treeAddressCode;
     }
 
+    /**
+     * Visita a los hijos (logicalExpression)
+     */
     @Override
     public String visitLogicalArithmeticExpression(LogicalArithmeticExpressionContext ctx) {
         visitChildren(ctx);
         return treeAddressCode;
     }
+
+    /**
+     * Visita a los hijos ()
+     * Tengo que trabajar con esta regla ahora para agregar los and or o cmp    
+     * logicalExpression : logicalExpression AND logicalExpression
+                  | logicalExpression OR logicalExpression
+                  | arithmeticExpression CMP arithmeticExpression
+                  | arithmeticExpression
+                  ;
+     */
     @Override
     public String visitLogicalExpression(LogicalExpressionContext ctx) {
         visitChildren(ctx);
+        if(ctx.getChild(1) == null) { //En este caso es unicamente una opal.
+
+            if(preOrPost == 1) //pre
+                treeAddressCode += incDecInstruction;
+        
+            String newVariable = variableGenerator.getNewVariable();
+
+            treeAddressCode += "\n" + newVariable + " = " + operands.pop(); 
+
+            if(preOrPost == 2) //post
+                treeAddressCode+= incDecInstruction;
+
+            preOrPost = 0;
+            incDecInstruction = "";
+
+            operands.push(newVariable);
+
+        }
+
         return treeAddressCode;
     }
 
+    /**
+     * Visita a los hijos de la expAritmetica, esots son aritmeticTerm y at.
+     */
     @Override
     public String visitArithmeticExpression(ArithmeticExpressionContext ctx) {
         visitChildren(ctx);
         return treeAddressCode;
     }
     
+    /**
+     * Visita a los hijos de arithmeticTerm, estos son factor, af
+     */
     @Override
     public String visitArithmeticTerm(ArithmeticTermContext ctx) {
         visitChildren(ctx);
         return treeAddressCode;
     }
 
+    /**
+     * Visitar un facto quiere decir que estamos en la hoja de esta rama. En caso de que el factor
+     * sea directamente el operando (ID, NUMBER, CHAR), se coloca en la lista de operandos el valor.
+     * En caso de ser un incDec, functionCall u otra expresion AL, se llama al visitor correspondiente.
+     */
     @Override
     public String visitFactor(FactorContext ctx) {
         if(ctx.NUMBER() != null) {
@@ -129,6 +183,12 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
 
+    /**
+     * Visita incDec, verifica si es post o pre y almacena esta información en preOrPost, luego 
+     * en función de si es inc o dec arma una instrucción id = id +/- 1; y la almacena en incDecInstruction
+     * Estas dos variables se usan luego para insertar el inc o dec en el TAC.
+     * Por último, coloca en operands el ID de la variable incrementada.
+     */
     @Override
     public String visitIncDec(IncDecContext ctx) {
         if(ctx.getChild(0).getText().contains("+") || ctx.getChild(0).getText().contains("-") ) //pre
@@ -148,13 +208,21 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
 
+    /**
+     * No implementado todavia
+     */
     @Override
     public String visitFunctionCall(FunctionCallContext ctx) {
         System.out.println("Function call");
         return treeAddressCode;
     }
    
-
+    /**
+     * Visitar Af es para encontrar si hay multiplicaciones o divisiones entre factores.
+     * En caso de que el contexto no tenga mas factores se retorna. Si los tiene se hace una visita
+     *  y en la lista de operands retornará el nuevo operando producto de la visita. Luego se arma el TAC.
+     * Por último veerifica si hay mas anidaciones.
+     */
     @Override
     public String visitAf(AfContext ctx) {
 
@@ -162,7 +230,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
         if(ctx.factor() != null) {
             firstOperand = operands.pop();
-            visitFactor(ctx.factor());
+            visitFactor(ctx.factor()); //Return with an operand in operands list
         }
         else {
             return treeAddressCode;
@@ -175,11 +243,11 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
         treeAddressCode += "\n" + newVariable + " = " + firstOperand; 
 
-        if(ctx.getChild(0) != null){
+        if(ctx.getChild(0) != null){ //Mul or Div
             treeAddressCode += ctx.getChild(0).getText();
         }
 
-        treeAddressCode += operands.pop();
+        treeAddressCode += operands.pop(); //SecondOperand
 
         if(preOrPost == 2) //post
             treeAddressCode+= incDecInstruction;
@@ -196,13 +264,25 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
 
-
+    /**
+     * Visitar el At para encontrar si hay sumas o restas entre terminos aritméticos.
+     * En caso de que no haya más terminos retorna. Si si hay terminos, saca el primer operandod e la 
+     * lista y realiza una visita al otro termino. EN operands volverá el operando.
+     * Arma el TAC.
+     * Verifica si hay anidaciones. 
+     */
     @Override
     public String visitAt(AtContext ctx) {
-        String firstOperand = operands.pop();
+ 
+        String firstOperand;
 
-        visitArithmeticTerm(ctx.arithmeticTerm());
-        //En operands debería venir el resultado de la visita
+        if(ctx.arithmeticTerm() != null) {
+            firstOperand = operands.pop();
+            visitArithmeticTerm(ctx.arithmeticTerm());
+        }
+        else {
+            return treeAddressCode;
+        }
         
         if(preOrPost == 1) //pre
             treeAddressCode += incDecInstruction;
@@ -230,7 +310,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
         return treeAddressCode;    
     }
-
 
 
     /* @Override
