@@ -135,7 +135,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             preOrPost = 1;
         else //post
             preOrPost = 2;
-        System.out.println(ctx.getChild(0).getText());
         String id = ctx.ID().getText();
 
         incDecInstruction += "\n" + id + " = " + id;
@@ -159,10 +158,14 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     @Override
     public String visitAf(AfContext ctx) {
 
-        String firstOperand = operands.pop();
+        String firstOperand;
 
         if(ctx.factor() != null) {
+            firstOperand = operands.pop();
             visitFactor(ctx.factor());
+        }
+        else {
+            return treeAddressCode;
         }
         
         if(preOrPost == 1) //pre
@@ -196,6 +199,35 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
     @Override
     public String visitAt(AtContext ctx) {
+        String firstOperand = operands.pop();
+
+        visitArithmeticTerm(ctx.arithmeticTerm());
+        //En operands debería venir el resultado de la visita
+        
+        if(preOrPost == 1) //pre
+            treeAddressCode += incDecInstruction;
+        
+        String newVariable = variableGenerator.getNewVariable();
+
+        treeAddressCode += "\n" + newVariable + " = " + firstOperand; 
+
+        if(ctx.getChild(0) != null){
+            treeAddressCode += ctx.getChild(0).getText();
+        }
+
+        treeAddressCode += operands.pop();
+
+        if(preOrPost == 2) //post
+            treeAddressCode+= incDecInstruction;
+
+        preOrPost = 0;
+        incDecInstruction = "";
+
+        operands.push(newVariable);
+
+        if(ctx.at().at() != null)
+            visitAt(ctx.at());
+
         return treeAddressCode;    
     }
 
