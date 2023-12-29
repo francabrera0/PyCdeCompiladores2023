@@ -31,7 +31,7 @@ public class App {
         try {
             tree = parser.program(); //Árbol con anotaciones
             // parser.program(); //Árbol con anotaciones
-            System.out.println("Compile finish");
+            System.out.println("\n-------------------\n<<Listener finish>>\n-------------------\n");
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
             // e.printStackTrace();
@@ -40,9 +40,9 @@ public class App {
 
         // Conectamos el visitor
         Visitor visitor = new Visitor();
-        visitor.visit(tree); 
+        String tac = visitor.visit(tree); 
 
-        // System.out.println(visitor);
+        System.out.println(tac);
         // System.out.println(visitor.getErrorNodes());
         // Imprime el arbol obtenido
         // System.out.println(tree.toStringTree(parser));
