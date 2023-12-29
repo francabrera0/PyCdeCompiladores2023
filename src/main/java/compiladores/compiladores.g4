@@ -30,13 +30,7 @@ MUL : '*';
 DIV : '/';
 AND : '&&';
 OR : '||';
-EQ : '==';
-NEQ : '!=';
-LT : '<';
-LEQ : '<=';
-GT : '>';
-GET : '>=';
-
+CMP : ('==' | '!=' | '<' | '<=' | '>' | '>=');
 INCDECOPERATORS : (ADD ADD | SUB SUB);
 
 
@@ -132,10 +126,28 @@ assignment : ID EQUAL logicalArithmeticExpression;
  *
  * @brief:
  */
-logicalArithmeticExpression : arithmeticExpression 
-                            | logicalExpression 
+logicalArithmeticExpression : logicalExpression 
                             ;
 
+/*
+ * Logical expressions
+ *
+ * @brief: An logical expression is a series of logical terms sepparated by '&&' or '||'.
+ *         Each of the terms is composed of a series of factors that can be compared with different operators (>,>=,<,<=,==,!=).
+ *         Factors can be:
+ *          - A number
+ *          - A variable name (ID)
+ *          - Another arithmetic expression
+ *          - A pre/post increment/deecrement
+ *          - A function call
+ *
+ *           example: a < b && a != 2 
+ */
+logicalExpression : logicalExpression AND logicalExpression
+                  | logicalExpression OR logicalExpression
+                  | arithmeticExpression CMP arithmeticExpression
+                  | arithmeticExpression
+                  ;
 
 /*
  * Arithmetic expressions
@@ -173,37 +185,6 @@ af : MUL factor af
    |
    ;
 
-/*
- * Logical expressions
- *
- * @brief: An logical expression is a series of logical terms sepparated by '&&' or '||'.
- *         Each of the terms is composed of a series of factors that can be compared with different operators (>,>=,<,<=,==,!=).
- *         Factors can be:
- *          - A number
- *          - A variable name (ID)
- *          - Another arithmetic expression
- *          - A pre/post increment/deecrement
- *          - A function call
- *
- *           example: a < b && a != 2 
- */
-logicalExpression : logicalTerm lt;
-
-logicalTerm : factor lf;
-
-lt : AND logicalTerm lt
-   | OR logicalTerm lt
-   |
-   ;
-
-lf : EQ logicalTerm lf
-   | NEQ logicalTerm lf
-   | LT logicalTerm lf
-   | LEQ logicalTerm lf
-   | GT logicalTerm lf
-   | GET logicalTerm lf
-   |
-   ;
 
 
 /*
