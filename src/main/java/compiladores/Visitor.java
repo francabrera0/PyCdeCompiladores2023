@@ -508,7 +508,12 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     /**
      * visitWhileStatement()
      * 
-     * @brief
+     * @brief First, generates the entry label. Then visits logicalArithmeticExpression node to get the condition;
+     *          if the condition is 1 (true) skip the jump instruction to te output label. If the condition is 0
+     *          (false) execute the jump instruction to the output label.
+     *        After this the while instructions are added.
+     *        Finally, a jump is added to the entry label (to make the loop) and followed by the output label (to exit
+     *          the loop).
      * @rule whileStatement : WHILE PARENTHESES_O logicalArithmeticExpression PARENTHESES_C (instruction | SEMICOLON)
      *                      ;
      */
