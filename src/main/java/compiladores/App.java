@@ -32,21 +32,23 @@ public class App {
             tree = parser.program(); //Árbol con anotaciones
             // parser.program(); //Árbol con anotaciones
             System.out.println("\n-------------------\n<<Listener finish>>\n-------------------\n");
+            
+            // Conectamos el visitor
+            Visitor visitor = new Visitor();
+            String tac = visitor.visit(tree); 
+
+            System.out.println(tac);
+            // System.out.println(visitor.getErrorNodes());
+            // Imprime el arbol obtenido
+            // System.out.println(tree.toStringTree(parser));
+            // System.out.println(escucha);
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
             // e.printStackTrace();
             System.exit(1);
         }
 
-        // Conectamos el visitor
-        Visitor visitor = new Visitor();
-        String tac = visitor.visit(tree); 
 
-        System.out.println(tac);
-        // System.out.println(visitor.getErrorNodes());
-        // Imprime el arbol obtenido
-        // System.out.println(tree.toStringTree(parser));
-        // System.out.println(escucha);
         
     }
 }

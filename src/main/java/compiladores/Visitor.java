@@ -9,9 +9,12 @@ import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
 import compiladores.compiladoresParser.AssignmentsContext;
 import compiladores.compiladoresParser.AtContext;
+import compiladores.compiladoresParser.ConditionContext;
 import compiladores.compiladoresParser.FactorContext;
+import compiladores.compiladoresParser.ForStatementContext;
 import compiladores.compiladoresParser.FunctionCallContext;
 import compiladores.compiladoresParser.IncDecContext;
+import compiladores.compiladoresParser.InitContext;
 import compiladores.compiladoresParser.InstructionContext;
 import compiladores.compiladoresParser.InstructionsContext;
 import compiladores.compiladoresParser.LogicalArithmeticExpressionContext;
@@ -20,6 +23,7 @@ import compiladores.compiladoresParser.ProgramContext;
 import compiladores.compiladoresParser.ReturnStatementContext;
 import compiladores.compiladoresParser.StatementContext;
 import compiladores.compiladoresParser.StatementsTypesContext;
+import compiladores.compiladoresParser.UpdateContext;
 import compiladores.compiladoresParser.WhileStatementContext;
 
 public class Visitor extends compiladoresBaseVisitor<String> {
@@ -535,6 +539,85 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         treeAddressCode += "\njmp " + entryLabel;
         treeAddressCode += "\n" + outLabel;
 
+        return treeAddressCode;
+    }
+    
+
+    /**
+     * visitForStatement()
+     * 
+     * @brief 
+     * @rule forStatement : FOR PARENTHESES_O init condition update PARENTHESES_C (instruction | SEMICOLON)
+     *                    ;
+     */
+    @Override
+    public String visitForStatement(ForStatementContext ctx) {
+        
+        visitInit(ctx.init());
+        
+        String entryLabel = labelGenerator.getNewLabel();
+        treeAddressCode += "\n" + entryLabel;
+
+        visitCondition(ctx.condition());
+        
+        String condition = operands.pop();
+        treeAddressCode += "\nsnz " + condition; 
+
+        String outLabel = labelGenerator.getNewLabel();
+        treeAddressCode += "\njmp " + outLabel;
+
+        visitInstruction(ctx.instruction());
+
+        visitUpdate(ctx.update());
+
+        treeAddressCode += "\njmp " + entryLabel;
+        treeAddressCode += "\n" + outLabel;
+
+        return treeAddressCode;
+    }
+
+    /**
+     * visitInit()
+     * 
+     * @brief visit children
+     * @rule init : statement
+     *            | assignments SEMICOLON
+     *            | SEMICOLON
+     *            ;
+     */
+    @Override
+    public String visitInit(InitContext ctx) {
+        visitChildren(ctx);
+        return treeAddressCode;
+    }
+
+    /**
+     * visitCondition()
+     * 
+     * @brief visit children
+     * @rule condition : logicalArithmeticExpression SEMICOLON
+     *                 | SEMICOLON
+     *                 ;
+     */
+    @Override
+    public String visitCondition(ConditionContext ctx) {
+        visitChildren(ctx);
+        return treeAddressCode;
+    }
+
+    /**
+     * visitUpdate()
+     * 
+     * @brief visit children
+     * @rule update : logicalArithmeticExpression COMMA update
+     *              | logicalArithmeticExpression
+     *              | assignments
+     *              |
+     *              ;
+     */
+    @Override
+    public String visitUpdate(UpdateContext ctx) {
+        visitChildren(ctx);
         return treeAddressCode;
     }
     

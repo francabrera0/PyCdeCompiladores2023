@@ -2,6 +2,7 @@ package compiladores;
 
 import java.util.LinkedList;
 
+import org.antlr.v4.runtime.tree.ErrorNode;
 
 import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
@@ -460,6 +461,11 @@ public class Listener extends compiladoresBaseListener{
                 return false;
 
         return true;
+    }
+
+    @Override
+    public void visitErrorNode(ErrorNode node) {
+        throw new RuntimeException("Error");
     }
 
     
