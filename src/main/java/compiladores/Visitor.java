@@ -17,6 +17,7 @@ import compiladores.compiladoresParser.InstructionsContext;
 import compiladores.compiladoresParser.LogicalArithmeticExpressionContext;
 import compiladores.compiladoresParser.LogicalExpressionContext;
 import compiladores.compiladoresParser.ProgramContext;
+import compiladores.compiladoresParser.ReturnStatementContext;
 import compiladores.compiladoresParser.StatementContext;
 import compiladores.compiladoresParser.StatementsTypesContext;
 
@@ -483,6 +484,27 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         //operands.push(id);
         return treeAddressCode;
     }
+
+
+    /**
+     * visitReturnStatement()
+     * 
+     * @brief calls the function visitLogicalArithmeticExpression to get the value of the expression
+     *          that is returned and this value is pushed onto the stack.
+     * @rule returnStatement : RETURN logicalArithmeticExpression SEMICOLON
+     *                       ;
+     */
+    @Override
+    public String visitReturnStatement(ReturnStatementContext ctx) {
+        visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression());
+
+        String value = operands.pop();
+
+        treeAddressCode += "\npush " + value;
+
+        return treeAddressCode;
+    }
+    
     
     
 }
