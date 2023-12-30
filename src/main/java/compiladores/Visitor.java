@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import compiladores.compiladoresParser.AfContext;
 import compiladores.compiladoresParser.ArithmeticExpressionContext;
 import compiladores.compiladoresParser.ArithmeticTermContext;
+import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
 import compiladores.compiladoresParser.AssignmentsContext;
 import compiladores.compiladoresParser.AtContext;
@@ -16,6 +17,8 @@ import compiladores.compiladoresParser.InstructionsContext;
 import compiladores.compiladoresParser.LogicalArithmeticExpressionContext;
 import compiladores.compiladoresParser.LogicalExpressionContext;
 import compiladores.compiladoresParser.ProgramContext;
+import compiladores.compiladoresParser.StatementContext;
+import compiladores.compiladoresParser.StatementsTypesContext;
 
 public class Visitor extends compiladoresBaseVisitor<String> {
 
@@ -431,5 +434,55 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
 
+    /**
+     * visitStatement()
+     * 
+     * @brief Visit statementsTypes.
+     * @rule statement : TYPE statementsTypes SEMICOLON
+     *                 ;
+     */
+    @Override
+    public String visitStatement(StatementContext ctx) {
+        visitStatementsTypes(ctx.statementsTypes());
+        return treeAddressCode;
+    }
+    
+    /**
+     * visitStatementTypes()
+     * 
+     * @brief Visit children, if there is more than one declaration separated by comma, 
+     *          it also visits.
+     * @rule statementsTypes : ID COMMA statementsTypes
+     *                       | ID
+     *                       | assignamentInStatement COMMA statementsTypes
+     *                       | assignamentInStatement
+     *                       ;
+     */
+    @Override
+    public String visitStatementsTypes(StatementsTypesContext ctx) {
+        visitChildren(ctx);
+        return treeAddressCode;
+    }
+    
+    /**
+     * visitAssignmentInsStatement()
+     * 
+     * @brief calls the function visitLogicalArithmeticExpression to obtain the value of the expression
+     *          that is assigned to the variable.
+     * @rule assignamentInStatement : ID EQUAL logicalArithmeticExpression
+     *                              ;
+     */
+    @Override
+    public String visitAssignamentInStatement(AssignamentInStatementContext ctx) {
+        visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression());
+
+        String id = ctx.ID().getText();
+        String value = operands.pop();
+
+        treeAddressCode += "\n" + id + " = " + value;
+        //operands.push(id);
+        return treeAddressCode;
+    }
+    
     
 }
