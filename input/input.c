@@ -1,7 +1,15 @@
 int main() {
 
-    int a = 125/85;
+    int a = 10;
     int b;
-    b = a++-2; 
-    return 5*8-2+3>a && b;
+    b = 0;
+
+    int c = 0;
+
+    while(b<3*a/5) {
+        b++;
+        c = 2*b+3;
+    }
+
+    return 0;
 }

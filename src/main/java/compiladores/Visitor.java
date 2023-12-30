@@ -20,6 +20,7 @@ import compiladores.compiladoresParser.ProgramContext;
 import compiladores.compiladoresParser.ReturnStatementContext;
 import compiladores.compiladoresParser.StatementContext;
 import compiladores.compiladoresParser.StatementsTypesContext;
+import compiladores.compiladoresParser.WhileStatementContext;
 
 public class Visitor extends compiladoresBaseVisitor<String> {
 
@@ -28,7 +29,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     private int preOrPost;                          //Control variable for the inclusion of the incDecInstruction: 0->None, 1->Pre, 2->Post
     private LinkedList<String> incDecID;            //List used to store the ids that must be incremented or decremented
     private VariableGenerator variableGenerator;    //Variable generator
-    // private LabelGenerator labelGenerator;          //Label generator
+    private LabelGenerator labelGenerator;          //Label generator
     private LinkedList<String> operands;            //List used to store operands. It's useful to have the operands available from different functions
 
 
@@ -41,7 +42,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         preOrPost = 0;
         incDecID = new LinkedList<>();
         variableGenerator = VariableGenerator.getInstanceOf();
-        // labelGenerator = LabelGenerator.getInstanceOf();
+        labelGenerator = LabelGenerator.getInstanceOf();
         operands = new LinkedList<>();
     }
 
@@ -485,7 +486,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
 
-
     /**
      * visitReturnStatement()
      * 
@@ -501,6 +501,34 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         String value = operands.pop();
 
         treeAddressCode += "\npush " + value;
+
+        return treeAddressCode;
+    }
+
+    /**
+     * visitWhileStatement()
+     * 
+     * @brief
+     * @rule whileStatement : WHILE PARENTHESES_O logicalArithmeticExpression PARENTHESES_C (instruction | SEMICOLON)
+     *                      ;
+     */
+    @Override
+    public String visitWhileStatement(WhileStatementContext ctx) {
+        
+        String entryLabel = labelGenerator.getNewLabel();
+        treeAddressCode += "\n" + entryLabel;
+
+        visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression());
+        String condition = operands.pop();
+        treeAddressCode += "\nsnz " + condition; 
+
+        String outLabel = labelGenerator.getNewLabel();
+        treeAddressCode += "\njmp " + outLabel;
+
+        visitInstruction(ctx.instruction());
+
+        treeAddressCode += "\njmp " + entryLabel;
+        treeAddressCode += "\n" + outLabel;
 
         return treeAddressCode;
     }
