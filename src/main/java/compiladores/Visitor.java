@@ -1,6 +1,5 @@
 package compiladores;
 
-
 import java.util.LinkedList;
 
 import compiladores.compiladoresParser.AfContext;
@@ -18,49 +17,69 @@ import compiladores.compiladoresParser.ProgramContext;
 
 public class Visitor extends compiladoresBaseVisitor<String> {
 
-    private String treeAddressCode;
-    private String incDecInstruction; //Used to store increment or decrement instruction
-    private int preOrPost; //0->None, 1->Pre, 2->Post
-    private VariableGenerator variableGenerator;
-    //private LabelGenerator labelGenerator;
-    private LinkedList<String> operands;
-    private LinkedList<String> incDecID;
+    private String treeAddressCode;                 //Buffer to store tree address code
+    private String incDecInstruction;               //Buffer to store increment or decrement instruction
+    private int preOrPost;                          //Control variable for the inclusion of the incDecInstruction: 0->None, 1->Pre, 2->Post
+    private LinkedList<String> incDecID;            //List used to store the ids that must be incremented or decremented
+    private VariableGenerator variableGenerator;    //Variable generator
+    // private LabelGenerator labelGenerator;          //Label generator
+    private LinkedList<String> operands;            //List used to store operands. It's useful to have the operands available from different functions
 
+
+    /**
+     * Class constructor
+     */
     public Visitor() {
         treeAddressCode = "";
         incDecInstruction = "";
         preOrPost = 0;
+        incDecID = new LinkedList<>();
         variableGenerator = VariableGenerator.getInstanceOf();
         // labelGenerator = LabelGenerator.getInstanceOf();
         operands = new LinkedList<>();
-        incDecID = new LinkedList<>();
     }
 
-
     /**
-     * Visita el programa, raiz del arbol completo
+     * visitProgram()
+     * 
+     * @brief Starting point, begins to traverse the entire tree.
+     * @rule program : instructions EOF;
      */
     @Override
     public String visitProgram(ProgramContext ctx) {
         visitChildren(ctx);
-
         return treeAddressCode;
     }
     
     /**
-     * Visita a los hijos, instruction e instructions(si mismo)
+     * visitInstructions()
+     * 
+     * @brief It visits an instruction and then visits itself by nesting instructions.
+     * @rule instructions : instruction instructions
+     *                    |
+     *                    ;
      */
     @Override
     public String visitInstructions(InstructionsContext ctx) {
         visitChildren(ctx);
-
         return treeAddressCode;
     }
     
     /**
-     * Visita a los hijos (pueden ser compoundInstruction, statement, assignments,
-     *  returnStatement, ifStatement, whileStatement, forStatement, functionCall, 
-     *  logicalArithmeticExpression,functionStatement)
+     * visitInstruction()
+     * 
+     * @brief Visit each instruction.
+     * @rule instruction : compoundInstruction
+     *                   | statement
+     *                   | assignments SEMICOLON                
+     *                   | returnStatement  
+     *                   | ifStatement
+     *                   | whileStatement
+     *                   | forStatement
+     *                   | functionCall SEMICOLON
+     *                   | logicalArithmeticExpression SEMICOLON
+     *                   | functionStatement
+     *                   ;  
      */
     @Override
     public String visitInstruction(InstructionContext ctx) {
@@ -69,9 +88,12 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
 
     /**
-     * Visita a los hijos (logicalExpression)
+     * visitLogicalArithmeticExpression()
      * 
-     * logicalArithmeticExpression : logicalExpression;
+     * @brief Visit your only child (logicalExpression)
+     * @rule logicalArithmeticExpression : logicalExpression
+     *                                   ;
+     * 
      */
     @Override
     public String visitLogicalArithmeticExpression(LogicalArithmeticExpressionContext ctx) {
@@ -80,30 +102,38 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
 
     /**
-     * Visita a los hijos ()
-     * Tengo que trabajar con esta regla ahora para agregar los and or o cmp    
-     * 
-     * logicalExpression : logicalExpression AND logicalExpression
-     *                   | logicalExpression OR logicalExpression
-     *                   | arithmeticExpression CMP arithmeticExpression
-     *                   | arithmeticExpression
-     *                   ; 
+     * visitLogicalExpression()
+     *    
+     * @brief This can have three possible child
+     *          - arithmeticExpression: call visitAritmeticExpression function and save 
+     *                                   the resulting operand in a new variable (this 
+     *                                   operand will be in the top of operands list).
+     *          - comparison: call visitArithmeticExpression function twice to get both operands.
+     *          - logic AND/OR: -> call visitLogicalExpression function to get the first operand
+     *                          -> call visitLogicalExpression function again to get the second operand
+     *                               (this operand can be another AND/OR)
+     *                          -> in this case, when the visitLogicalExpression function is called ,
+     *                               it is entered again in this case
+     *                          -> recursive calls
+     *                          -> This is done until all the operand are arithmeticExpressions or
+     *                               comparisons and there the tac begins to be generated.
+     * @rule logicalExpression : logicalExpression AND logicalExpression
+     *                         | logicalExpression OR logicalExpression
+     *                         | arithmeticExpression CMP arithmeticExpression
+     *                         | arithmeticExpression
+     *                         ; 
      */
     @Override
     public String visitLogicalExpression(LogicalExpressionContext ctx) {
                 
-        if(ctx.getChild(1) == null) { //En este caso es unicamente una opal. Creo una nuev var
+        if(ctx.getChild(1) == null) { //arithmeticExpression
             visitArithmeticExpression(ctx.arithmeticExpression(0)); 
 
             String newVariable = variableGenerator.getNewVariable();
             
-            if(preOrPost == 1) //pre
-                treeAddressCode += incDecInstruction;
-            
+            if(preOrPost == 1) treeAddressCode += incDecInstruction;
             treeAddressCode += "\n" + newVariable + " = " + operands.pop(); 
-
-            if(preOrPost == 2) //post
-                treeAddressCode+= incDecInstruction;
+            if(preOrPost == 2) treeAddressCode+= incDecInstruction;
 
             preOrPost = 0;
             incDecInstruction = "";
@@ -112,14 +142,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         }
         else {
             if(ctx.getChild(1).getText().equals("&&") || ctx.getChild(1).getText().equals("||")) { //AND/OR
-                /**
-                 * Lo que hace es: - Busca el primer operando
-                 *                 - Este seguramente sea o una cmp o una arithm
-                 *                 - Luego busca el segundo ( el segundo puede ser otra && u ||) 
-                 *                 - En caso que sea otra && u || cuando hace el visit logical "vuelve a empezar" dejando en la pila de operandos el primero
-                 *                 - Cuando ya no hay && u || entonces empieza a armar el tac con todos los op que fue apilando
-                 *                 - Es recursivo
-                 */
 
                 visitLogicalExpression(ctx.logicalExpression(0));
                 visitLogicalExpression(ctx.logicalExpression(1));
@@ -131,24 +153,19 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
                 treeAddressCode += "\n" + newVariable + " = " + firstOperand + operator + secondOperand;
                 operands.push(newVariable);
-
-                return treeAddressCode;
-
             }
 
-            else { //CMP solo permite comparar 2 aritmeticas
+            else { //Comparison (Only accepts two operands)
 
-                visitArithmeticExpression(ctx.arithmeticExpression(0));//Cuando retorna tiene en operands el resultado
+                visitArithmeticExpression(ctx.arithmeticExpression(0));
+                visitArithmeticExpression(ctx.arithmeticExpression(1)); 
 
-                visitArithmeticExpression(ctx.arithmeticExpression(1)); //Cuando retorna vuelve con el resultado
-        
-                String newVariable = variableGenerator.getNewVariable(); //Variable en la que se guard la comp
-
+                String newVariable = variableGenerator.getNewVariable();
                 String secondOperand = operands.pop();
                 String firstOperand = operands.pop();
 
                 treeAddressCode += "\n" + newVariable + " = " +  firstOperand + ctx.getChild(1).getText() + secondOperand;
-                operands.push(newVariable); //Pongo en operands la variable de la comp
+                operands.push(newVariable); 
             }
         }
 
@@ -156,10 +173,10 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
 
     /**
-     * Visita a los hijos de la expAritmetica, esots son aritmeticTerm y at.
-     * Aca lo que hago es poner en una nueva var el resultado de la expresion.
-     * 
-     * arithmeticExpression : arithmeticTerm at;
+     * visitArithmeticExpression()
+     *  
+     * @brief Visit arithmetic terms and nested terms (at)
+     * @rule arithmeticExpression : arithmeticTerm at;
      */
     @Override
     public String visitArithmeticExpression(ArithmeticExpressionContext ctx) {
@@ -168,9 +185,10 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
     
     /**
-     * Visita a los hijos de arithmeticTerm, estos son factor, af
+     * visitArithmeticTerm()
      * 
-     * arithmeticTerm : factor af;
+     * @brief Visit factors and nested factors (af)
+     * @rule arithmeticTerm : factor af;
      */
     @Override
     public String visitArithmeticTerm(ArithmeticTermContext ctx) {
@@ -179,17 +197,18 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
 
     /**
-     * Visitar un facto quiere decir que estamos en la hoja de esta rama. En caso de que el factor
-     * sea directamente el operando (ID, NUMBER, CHAR), se coloca en la lista de operandos el valor.
-     * En caso de ser un incDec, functionCall u otra expresion AL, se llama al visitor correspondiente.
+     * visitFactor()
      * 
-     * factor : NUMBER
-     *        | CHARACTER
-     *        | ID
-     *        | PARENTHESES_O logicalArithmeticExpression PARENTHESES_C
-     *        | incDec
-     *        | functionCall
-     *        ;
+     * @brief When visiting a factor, it may be the case that is terminal (we already have the final
+     *          value that we need) and therefore we only have to place this value in the operands list.
+     *        If the factor is not terminal, the corresponding visit functions are called.
+     * @rule factor : NUMBER
+     *              | CHARACTER
+     *              | ID
+     *              | PARENTHESES_O logicalArithmeticExpression PARENTHESES_C
+     *              | incDec
+     *              | functionCall
+     *              ;
      */
     @Override
     public String visitFactor(FactorContext ctx) {
@@ -217,14 +236,12 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
 
     /**
-     * Visita incDec, verifica si es post o pre y almacena esta información en preOrPost, luego 
-     * en función de si es inc o dec arma una instrucción id = id +/- 1; y la almacena en incDecInstruction
-     * Estas dos variables se usan luego para insertar el inc o dec en el TAC.
-     * Por último, coloca en operands el ID de la variable incrementada.
-     * 
-     * incDec : INCDECOPERATORS ID
-     *        | ID INCDECOPERATORS
-     *        ;
+     * @brief Verifies if it is a pre or post operation and save this information in preOrPostVariable,
+     *          then it assembles the instructions and stores it in the variable incDecInstruction,
+     *          both variables will be used to insert the instruction into the TAC later.
+     * @rule incDec : INCDECOPERATORS ID
+     *              | ID INCDECOPERATORS
+     *              ;
      */
     @Override
     public String visitIncDec(IncDecContext ctx) {
@@ -247,7 +264,10 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
 
     /**
-     * No implementado todavia
+     * visitFunctionCall()
+     * 
+     * @brief Not implemented yet.
+     * @rule 
      */
     @Override
     public String visitFunctionCall(FunctionCallContext ctx) {
@@ -256,15 +276,17 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
    
     /**
-     * Visitar Af es para encontrar si hay multiplicaciones o divisiones entre factores.
-     * En caso de que el contexto no tenga mas factores se retorna. Si los tiene se hace una visita
-     *  y en la lista de operands retornará el nuevo operando producto de la visita. Luego se arma el TAC.
-     * Por último veerifica si hay mas anidaciones.
+     * visitAf()
      * 
-     * af : MUL factor af
-     *    | DIV factor af
-     *    |
-     *    ;
+     * @brief This node is visited in order to find multiplications or divisions between factors.
+     *        In case this context does not have more factors the function returns.
+     *        In case this context has more factors, the visitFactor function is called and return with 
+     *          the factor in the operands list.
+     *        Finally check if there are more nested operation, and if so, visit AF. 
+     * @rule af : MUL factor af
+     *          | DIV factor af
+     *          |
+     *          ;
      */
     @Override
     public String visitAf(AfContext ctx) {
@@ -275,16 +297,16 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             firstOperand = operands.pop();
             visitFactor(ctx.factor()); //Return with an operand in operands list
         }
-        else {
+        else 
             return treeAddressCode;
-        }
+        
         
         String secondOperand = operands.pop();
         String newVariable = variableGenerator.getNewVariable();
         String operator = ctx.getChild(0).getText();
         Boolean incDec = false;
 
-        if(preOrPost!= 0){
+        if(preOrPost!= 0) { //Check if the id incremented(decremented) is used here
             String s = incDecID.pop();
             if(s.equals(firstOperand) || s.equals(secondOperand))
                 incDec = true;
@@ -292,13 +314,9 @@ public class Visitor extends compiladoresBaseVisitor<String> {
                 incDecID.push(s);
         } 
 
-        if(preOrPost == 1 && incDec) //pre
-            treeAddressCode += incDecInstruction;
-        
+        if(preOrPost == 1 && incDec) treeAddressCode += incDecInstruction;
         treeAddressCode += "\n" + newVariable + " = " + firstOperand + operator + secondOperand; 
-
-        if(preOrPost == 2 && incDec) //post
-            treeAddressCode+= incDecInstruction;
+        if(preOrPost == 2 && incDec) treeAddressCode+= incDecInstruction;
 
         if(incDec) {
             preOrPost = 0;
@@ -321,10 +339,17 @@ public class Visitor extends compiladoresBaseVisitor<String> {
      * Arma el TAC.
      * Verifica si hay anidaciones. 
      * 
-     * at : ADD arithmeticTerm at
-     *    | SUB arithmeticTerm at
-     *    |
-     *    ;
+     * visitAt()
+     * 
+     * @brief This node is visited in order to find add or subs between terms.
+     *        In case this context does not have more terms the function returns.
+     *        In case this context has more terms, the visitArithmeticTerm function is called 
+     *          and return with the term in the operands list.
+     *        Finally check if there are more nested operation, and if so, visit AT. 
+     * @rule at : ADD arithmeticTerm at
+     *          | SUB arithmeticTerm at
+     *          |
+     *          ;
      */
     @Override
     public String visitAt(AtContext ctx) {
@@ -345,7 +370,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
         Boolean incDec = false;
 
-        if(preOrPost!= 0){
+        if(preOrPost!= 0){ //Check if the id incremented(decremented) is used here
             String s = incDecID.pop();
             if(s.equals(firstOperand) || s.equals(secondOperand))
                 incDec = true;
@@ -353,19 +378,15 @@ public class Visitor extends compiladoresBaseVisitor<String> {
                 incDecID.push(s);
         } 
 
-        if(preOrPost == 1 && incDec) //pre
-            treeAddressCode += incDecInstruction;
-        
-
+        if(preOrPost == 1 && incDec) treeAddressCode += incDecInstruction;
         treeAddressCode += "\n" + newVariable + " = " + firstOperand + operator + secondOperand; 
-
-        if(preOrPost == 2 && incDec) //post
-            treeAddressCode+= incDecInstruction;
+        if(preOrPost == 2 && incDec) treeAddressCode+= incDecInstruction;
 
         if(incDec) {
             preOrPost = 0;
             incDecInstruction = "";
         }
+
         operands.push(newVariable);
 
         if(ctx.at().at() != null)

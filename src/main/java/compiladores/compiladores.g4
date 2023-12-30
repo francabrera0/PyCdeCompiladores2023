@@ -56,8 +56,8 @@ OTHER : . ;
 /*
  * Initial symbol. Search for instructions until the file is finished.
  */
-program : instructions EOF;
-
+program : instructions EOF
+        ;
 
 /*
  * This rule, allows the concatenation of instructions
@@ -86,8 +86,8 @@ instruction : compoundInstruction
  *  
  * @brief: Series of instructions enclosed in braces
  */
-compoundInstruction : BRACES_O instructions BRACES_C;
-
+compoundInstruction : BRACES_O instructions BRACES_C
+                    ;
 
 /*
  * Statement
@@ -96,7 +96,8 @@ compoundInstruction : BRACES_O instructions BRACES_C;
  *        
  *         example: int a=10, b, d, m=0;
  */
-statement : TYPE statementsTypes SEMICOLON;
+statement : TYPE statementsTypes SEMICOLON
+          ;
 
 statementsTypes : ID COMMA statementsTypes
                 | ID
@@ -104,7 +105,8 @@ statementsTypes : ID COMMA statementsTypes
                 | assignamentInStatement
                 ;
 
-assignamentInStatement : ID EQUAL logicalArithmeticExpression;
+assignamentInStatement : ID EQUAL logicalArithmeticExpression
+                       ;
 
 /*
  * Assignment
@@ -117,8 +119,8 @@ assignments : assignment COMMA assignments
             | assignment
             ;
 
-assignment : ID EQUAL logicalArithmeticExpression;
-
+assignment : ID EQUAL logicalArithmeticExpression
+           ;
 
 /*
  * Logical Arithmetic expressions
@@ -154,9 +156,11 @@ logicalExpression : logicalExpression AND logicalExpression
  *
  *          example: 10 + a + (5*10+3) * --i 
  */
-arithmeticExpression : arithmeticTerm at;
+arithmeticExpression : arithmeticTerm at
+                     ;
 
-arithmeticTerm : factor af;
+arithmeticTerm : factor af
+               ;
 
 at : ADD arithmeticTerm at
    | SUB arithmeticTerm at
@@ -176,8 +180,6 @@ af : MUL factor af
    |
    ;
 
-
-
 /*
  * Pre/Post Increment/Decrement
  *
@@ -189,7 +191,6 @@ af : MUL factor af
 incDec : INCDECOPERATORS ID
        | ID INCDECOPERATORS
        ;
-
 
 /*
  * Return
@@ -232,7 +233,6 @@ elseIfStatement : ELSE IF PARENTHESES_O logicalArithmeticExpression PARENTHESES_
 whileStatement : WHILE PARENTHESES_O logicalArithmeticExpression PARENTHESES_C (instruction | SEMICOLON)
                ;
 
-
 /*
  * For
  *
@@ -247,7 +247,6 @@ whileStatement : WHILE PARENTHESES_O logicalArithmeticExpression PARENTHESES_C (
  */
 forStatement : FOR PARENTHESES_O init condition update PARENTHESES_C (instruction | SEMICOLON)
              ;
-
 
 init : statement
      | assignments SEMICOLON
@@ -272,13 +271,13 @@ update : logicalArithmeticExpression COMMA update
  *           
  *   example: int sum(int, int); , int sum(int a, int b) { return a + b;}
  */
-
 functionStatement : functionDeclaration compoundInstruction
                   | functionPrototype
                   ;
 
 functionDeclaration : TYPE ID PARENTHESES_O parameters PARENTHESES_C
                     ;
+
 parameters : TYPE ID
            | TYPE ID COMMA parameters
            |
@@ -304,7 +303,6 @@ parametersPrototype : TYPE ID
  *           
  *   example: sum(a,b); , sum(3, sum(a, 4)); 
  */
-
 functionCall : ID PARENTHESES_O callParameters PARENTHESES_C
              ;
 
@@ -322,4 +320,3 @@ parameter : NUMBER
           | assignment
           ;
 /*end syntactic rules*/
-
