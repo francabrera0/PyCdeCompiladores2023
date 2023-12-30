@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import compiladores.compiladoresParser.AfContext;
 import compiladores.compiladoresParser.ArithmeticExpressionContext;
 import compiladores.compiladoresParser.ArithmeticTermContext;
+import compiladores.compiladoresParser.AssignmentContext;
+import compiladores.compiladoresParser.AssignmentsContext;
 import compiladores.compiladoresParser.AtContext;
 import compiladores.compiladoresParser.FactorContext;
 import compiladores.compiladoresParser.FunctionCallContext;
@@ -393,6 +395,41 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             visitAt(ctx.at());
 
         return treeAddressCode;    
+    }    
+
+    /**
+     * visitAssignments()
+     * 
+     * @brief Visit all the assignments.
+     * @rule assignments : assignment COMMA assignments
+     *                   | assignment
+     *                   ;
+     */
+    @Override
+    public String visitAssignments(AssignmentsContext ctx) {
+        visitChildren(ctx);
+        return treeAddressCode;
     }
+    
+    /**
+     * visitAssignment()
+     * 
+     * @brief calls the function visitLogicalArithmeticExpression to obtain the value of the expression
+     *          that is assigned to the variable.
+     * @rule assignment : ID EQUAL logicalArithmeticExpression
+     *                  ;
+     */
+    @Override
+    public String visitAssignment(AssignmentContext ctx) {
+        visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression());
+
+        String id = ctx.ID().getText();
+        String value = operands.pop();
+
+        treeAddressCode += "\n" + id + " = " + value;
+        //operands.push(id);
+        return treeAddressCode;
+    }
+
     
 }
