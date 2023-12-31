@@ -546,7 +546,16 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     /**
      * visitForStatement()
      * 
-     * @brief 
+     * @brief This function, performs the following steps:
+     *          - visits the init node in order to get all the initialization instructions
+     *          - generates the entry label
+     *          - Then visits condition node to get the condition; if the condition is 1 (true) 
+     *             skip the jump instruction to te output label. If the condition is 0
+     *             (false) execute the jump instruction to the output label.
+     *          - The for instructions are added by visiting the instruction node.
+     *          - visits the update node in order to get all the update instructions
+     *          - Finally, a jump is added to the entry label (to make the loop) and followed 
+     *             by the output label (to exit the loop).
      * @rule forStatement : FOR PARENTHESES_O init condition update PARENTHESES_C (instruction | SEMICOLON)
      *                    ;
      */
@@ -620,7 +629,5 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         visitChildren(ctx);
         return treeAddressCode;
     }
-    
-    
     
 }
