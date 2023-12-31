@@ -34,9 +34,9 @@ public class App {
             
             // Conectamos el visitor
             Visitor visitor = new Visitor();
-            String tac = visitor.visit(tree); 
+            // String tac = visitor.visit(tree); 
+            visitor.visit(tree); 
 
-            System.out.println(tac);
             // System.out.println(visitor.getErrorNodes());
             // Imprime el arbol obtenido
             // System.out.println(tree.toStringTree(parser));

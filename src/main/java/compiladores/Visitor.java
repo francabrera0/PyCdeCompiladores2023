@@ -1,5 +1,8 @@
 package compiladores;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.LinkedList;
 
 import compiladores.compiladoresParser.AfContext;
@@ -44,6 +47,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     private LinkedList<String> operands;            //List used to store operands. It's useful to have the operands available from different functions
     private String returnLabel;
     private String endElseIfLabel;
+    private String filePath = "./intermediateCode.log";
 
     /**
      * Class constructor
@@ -68,7 +72,22 @@ public class Visitor extends compiladoresBaseVisitor<String> {
      */
     @Override
     public String visitProgram(ProgramContext ctx) {
+        System.out.println("\n-------------------\n<<Visitor begin>>\n-------------------");
+
         visitChildren(ctx);
+
+        File file = new File(filePath);
+        if(file.exists())
+            file.delete();
+        
+        try(FileWriter fileWriter = new FileWriter(filePath)){
+            fileWriter.write(treeAddressCode);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("\n-------------------\n<<Visitor end>>\n-------------------");
+
         return treeAddressCode;
     }
     
