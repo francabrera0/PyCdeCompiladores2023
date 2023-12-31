@@ -32,7 +32,7 @@ public class Listener extends compiladoresBaseListener{
 
     private SymbolTable symbolTable = SymbolTable.getInstanceOf();
     String filePath = "./symbolTable.log";
-    
+    String warningMessage = "";
 
     /**
      * Enter initial rule. Global context is added.
@@ -42,7 +42,8 @@ public class Listener extends compiladoresBaseListener{
     public void enterProgram(ProgramContext ctx) {
         symbolTable.deleteFile(filePath);
         
-        //System.out.println("------------>Compilation begins<------------");
+        System.out.println("\n-------------------\n<<Listener begin>>\n-------------------");
+
         symbolTable.addContext();
     }
     
@@ -54,7 +55,8 @@ public class Listener extends compiladoresBaseListener{
     public void exitProgram(ProgramContext ctx) {
         
         deleteContext();
-        //System.out.println("------------->Compilation ends<-------------");
+        System.out.println(warningMessage);
+        System.out.println("\n-------------------\n<<Listener end>>\n-------------------");
     }
 
 
@@ -274,7 +276,7 @@ public class Listener extends compiladoresBaseListener{
 
             if(id != null) {
                 if(!id.getInitialized())
-                    System.out.println("warning: '" + ctx.ID().getText() + "' is used uninitialized");
+                    warningMessage += ("\nwarning: '" + ctx.ID().getText() + "' is used uninitialized");
                 id.setUsed(true);
             }
             else
@@ -285,7 +287,7 @@ public class Listener extends compiladoresBaseListener{
 
             if(id != null) {
                 if(!id.getInitialized())
-                    System.out.println("warning: '" + ctx.incDec().ID().getText() + "' is used uninitialized");
+                    warningMessage += ("\nwarning: '" + ctx.incDec().ID().getText() + "' is used uninitialized");
                 id.setUsed(true);
             }
             else
@@ -329,7 +331,7 @@ public class Listener extends compiladoresBaseListener{
                     Variable variable = (Variable) symbolTable.searchSymbol(variableName);
                     if(variable != null) { //Variable exists
                         if(!variable.getInitialized())
-                            System.out.println("warning: '" + variableName + "' is used uninitialized");
+                            warningMessage += ("\nwarning: '" + variableName + "' is used uninitialized");
                         variable.setUsed(true);
                     } 
                     else //Variable does not exist
@@ -344,7 +346,7 @@ public class Listener extends compiladoresBaseListener{
 
                     if(variable != null) { //Variable exists
                         if(!variable.getInitialized())
-                            System.out.println("warning: '" + variableName + "' is used uninitialized");
+                            warningMessage += ("\nwarning: '" + variableName + "' is used uninitialized");
                         variable.setUsed(true);
                     }
                     else //Variable does not exist
@@ -439,7 +441,7 @@ public class Listener extends compiladoresBaseListener{
         symbolTable.printSymbolTableToFile(filePath);
         //Unused variables and functions
         if(!symbolTable.getUnusedID().isEmpty())
-            System.out.println("Warning: Unused " + symbolTable.getUnusedID()); 
+            warningMessage += ("\nWarning: Unused " + symbolTable.getUnusedID()); 
  
         //The prototypes defined in this context lose their scope, therefore it is verified if they were
         // used and not initialized

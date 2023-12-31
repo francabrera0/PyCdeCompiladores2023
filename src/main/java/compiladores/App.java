@@ -31,7 +31,6 @@ public class App {
         try {
             tree = parser.program(); //Árbol con anotaciones
             // parser.program(); //Árbol con anotaciones
-            System.out.println("\n-------------------\n<<Listener finish>>\n-------------------\n");
             
             // Conectamos el visitor
             Visitor visitor = new Visitor();
