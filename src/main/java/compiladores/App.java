@@ -34,9 +34,12 @@ public class App {
             
             // Conectamos el visitor
             Visitor visitor = new Visitor();
-            // String tac = visitor.visit(tree); 
-            visitor.visit(tree); 
+            String treeAddressCode = visitor.visit(tree); 
 
+            CodeOptimizer codeOptimizer = new CodeOptimizer(treeAddressCode);
+            String optimizedCode = codeOptimizer.optimize();
+
+            System.out.println(optimizedCode);
             // System.out.println(visitor.getErrorNodes());
             // Imprime el arbol obtenido
             // System.out.println(tree.toStringTree(parser));
