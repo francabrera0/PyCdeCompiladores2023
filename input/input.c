@@ -1,19 +1,28 @@
-int main(char argv, int argc) {
+double average(int a, int b, int c);
 
-    int a = 10;    
+int main() {
+    int a, b, c;
+
+    a = 10*5;
+    b = 5;
+    c = ++a;
+
+    double result = average(a, b, c);
+
     
-    if(a==0){
-        a++;
-    }
-    else if (a>=1 && a<5) {
-        a--;
-    }
-    else if(a>=5 && a<=9) {
-        a = 2*a;
-    }
-    else {
-        a = 3*6;
-    }
-    return 0;
+    return result;
 }
 
+double average(int a, int b, int c) {
+    int acc = 0;
+    for(int i=0; i<3; i++) {
+        if(i==0)
+            acc = acc + a;
+        else if(i==1)
+            acc = acc + b;
+        else
+            acc = acc + c;
+    }
+
+    return acc/3;
+}

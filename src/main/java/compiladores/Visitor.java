@@ -805,13 +805,13 @@ public class Visitor extends compiladoresBaseVisitor<String> {
      * visitElseIfStatement()
      * 
      * @brief This function performs the following steps:
-     *          - visits logicalArithmeticExpression node to obtain the if condition
-     *          - evaluates the if condition. If it is zero, jump to the end of the if. If it is not zero, skip the jump instruction.
-     *          - visit instruction node to obtain the if instructions.
+     *          - visits logicalArithmeticExpression if exists (if exists) to obtain the else if condition
+     *              - If the condition is null, just visit instructions node (else).
+     *          - evaluates the else if condition. If it is zero, jump to the end of the elif. If it is not zero, skip the jump instruction.
+     *          - visit instruction node to obtain the elif instructions.
      *          - adds the jump to endElseIf label (if the condition was true, the statements are executed and the else if block is left)
-     *          - adds the endif label
+     *          - adds the endelif label
      *          - visit elseIfStatement node to handle elseif/else
-     *          - adds the endElseIf label
      * @rule elseIfStatement : ELSE IF PARENTHESES_O logicalArithmeticExpression PARENTHESES_C instruction elseIfStatement
      *                       | ELSE instruction
      *                       |
