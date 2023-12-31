@@ -294,9 +294,9 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         incDecInstruction += "\n" + id + " = " + id;
 
         if(ctx.INCDECOPERATORS().getText().equals("++"))
-            incDecInstruction += " + 1";
+            incDecInstruction += "+1";
         else
-            incDecInstruction += " - 1";
+            incDecInstruction += "-1";
 
         operands.push(id);
         incDecID.push(id);
