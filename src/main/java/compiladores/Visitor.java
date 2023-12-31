@@ -11,11 +11,13 @@ import compiladores.compiladoresParser.AssignmentsContext;
 import compiladores.compiladoresParser.AtContext;
 import compiladores.compiladoresParser.CallParametersContext;
 import compiladores.compiladoresParser.ConditionContext;
+import compiladores.compiladoresParser.ElseIfStatementContext;
 import compiladores.compiladoresParser.FactorContext;
 import compiladores.compiladoresParser.ForStatementContext;
 import compiladores.compiladoresParser.FunctionCallContext;
 import compiladores.compiladoresParser.FunctionDeclarationContext;
 import compiladores.compiladoresParser.FunctionStatementContext;
+import compiladores.compiladoresParser.IfStatementContext;
 import compiladores.compiladoresParser.IncDecContext;
 import compiladores.compiladoresParser.InitContext;
 import compiladores.compiladoresParser.InstructionContext;
@@ -41,6 +43,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     private LabelGenerator labelGenerator;          //Label generator
     private LinkedList<String> operands;            //List used to store operands. It's useful to have the operands available from different functions
     private String returnLabel;
+    private String endElseIfLabel;
 
     /**
      * Class constructor
@@ -54,6 +57,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         labelGenerator = LabelGenerator.getInstanceOf();
         operands = new LinkedList<>();
         returnLabel = "";
+        endElseIfLabel = "";
     }
 
     /**
@@ -761,6 +765,81 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
 
+    /**
+     * visitIfStatement()
+     * 
+     * @brief This function performs the following steps:
+     *          - visits logicalArithmeticExpression node to obtain the if condition
+     *          - evaluates the if condition. If it is zero, jump to the end of the if. If it is not zero, skip the jump instruction.
+     *          - visit instruction node to obtain the if instructions.
+     *          - adds the jump to endElseIf label (if the condition was true, the statements are executed and the else if block is left)
+     *          - adds the endif label
+     *          - visit elseIfStatement node to handle elseif/else
+     *          - adds the endElseIf label
+     * @rule ifStatement : IF PARENTHESES_O logicalArithmeticExpression PARENTHESES_C  instruction elseIfStatement
+     *                   ;
+     */
+    @Override
+    public String visitIfStatement(IfStatementContext ctx) {
+        visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression());
+        String condition = operands.pop();
+        treeAddressCode += "\nsnz " + condition;
+        
+        String endIfLabel = labelGenerator.getNewLabel();
+        treeAddressCode += "\njmp " + endIfLabel;
+
+        visitInstruction(ctx.instruction());
+
+        endElseIfLabel = labelGenerator.getNewLabel();
+        treeAddressCode += "\njmp " + endElseIfLabel;
+        treeAddressCode += "\n" + endIfLabel;
+
+        visitElseIfStatement(ctx.elseIfStatement());
+        
+        treeAddressCode += "\n" + endElseIfLabel;
+
+        return treeAddressCode;
+    }
+    
+    /**
+     * visitElseIfStatement()
+     * 
+     * @brief This function performs the following steps:
+     *          - visits logicalArithmeticExpression node to obtain the if condition
+     *          - evaluates the if condition. If it is zero, jump to the end of the if. If it is not zero, skip the jump instruction.
+     *          - visit instruction node to obtain the if instructions.
+     *          - adds the jump to endElseIf label (if the condition was true, the statements are executed and the else if block is left)
+     *          - adds the endif label
+     *          - visit elseIfStatement node to handle elseif/else
+     *          - adds the endElseIf label
+     * @rule elseIfStatement : ELSE IF PARENTHESES_O logicalArithmeticExpression PARENTHESES_C instruction elseIfStatement
+     *                       | ELSE instruction
+     *                       |
+     *                       ;
+     */
+    @Override
+    public String visitElseIfStatement(ElseIfStatementContext ctx) {
+        if(ctx.logicalArithmeticExpression() != null) { //elif
+
+            visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression());
+            String condition = operands.pop();
+            treeAddressCode += "\nsnz " + condition;
+        
+            String endIfLabel = labelGenerator.getNewLabel();
+            treeAddressCode += "\njmp " + endIfLabel;
+
+            visitInstruction(ctx.instruction());
+
+            treeAddressCode += "\njmp " + endElseIfLabel;
+            treeAddressCode += "\n" + endIfLabel;
+
+            visitElseIfStatement(ctx.elseIfStatement());
+        }
+        else { //else
+            visitInstruction(ctx.instruction());
+        }
+        return treeAddressCode;
+    }
     
 
 }
