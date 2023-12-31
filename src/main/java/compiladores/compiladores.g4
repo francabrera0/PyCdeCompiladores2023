@@ -86,7 +86,7 @@ instruction : compoundInstruction
  *  
  * @brief: Series of instructions enclosed in braces
  */
-compoundInstruction : BRACES_O instructions BRACES_C
+compoundInstruction : BRACES_O      BRACES_C
                     ;
 
 /*
@@ -315,8 +315,6 @@ parameter : NUMBER
           | CHARACTER
           | ID
           | functionCall
-          | incDec
           | logicalArithmeticExpression
-          | assignment
           ;
 /*end syntactic rules*/

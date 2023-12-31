@@ -1,16 +1,18 @@
-int foo(int a, int b, char c);
+int add(int a, int b);
+int sub(int a, int b);
 
-int main() {
+int main(char argv, int argc) {
 
-    int a = 10;
-    
-    while(1){}
+    int a = 10;    
+    int b = add(2*add(2*a++, 9), 5*8);
 
     return 0;
 }
 
-int foo(int a, int b, char c) {
-    a = 12+5;
-    b = 13>a;
-    return a+b+c;
+int add(int a, int b) {
+    return a+b;
+}
+
+int sub(int a, int b) {
+    return a-b;
 }

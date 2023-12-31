@@ -9,6 +9,7 @@ import compiladores.compiladoresParser.AssignamentInStatementContext;
 import compiladores.compiladoresParser.AssignmentContext;
 import compiladores.compiladoresParser.AssignmentsContext;
 import compiladores.compiladoresParser.AtContext;
+import compiladores.compiladoresParser.CallParametersContext;
 import compiladores.compiladoresParser.ConditionContext;
 import compiladores.compiladoresParser.FactorContext;
 import compiladores.compiladoresParser.ForStatementContext;
@@ -21,6 +22,7 @@ import compiladores.compiladoresParser.InstructionContext;
 import compiladores.compiladoresParser.InstructionsContext;
 import compiladores.compiladoresParser.LogicalArithmeticExpressionContext;
 import compiladores.compiladoresParser.LogicalExpressionContext;
+import compiladores.compiladoresParser.ParameterContext;
 import compiladores.compiladoresParser.ParametersContext;
 import compiladores.compiladoresParser.ProgramContext;
 import compiladores.compiladoresParser.ReturnStatementContext;
@@ -38,7 +40,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     private VariableGenerator variableGenerator;    //Variable generator
     private LabelGenerator labelGenerator;          //Label generator
     private LinkedList<String> operands;            //List used to store operands. It's useful to have the operands available from different functions
-
+    private String returnLabel;
 
     /**
      * Class constructor
@@ -51,6 +53,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         variableGenerator = VariableGenerator.getInstanceOf();
         labelGenerator = LabelGenerator.getInstanceOf();
         operands = new LinkedList<>();
+        returnLabel = "";
     }
 
     /**
@@ -274,18 +277,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
         operands.push(id);
         incDecID.push(id);
-        return treeAddressCode;
-    }
-
-    /**
-     * visitFunctionCall()
-     * 
-     * @brief Not implemented yet.
-     * @rule 
-     */
-    @Override
-    public String visitFunctionCall(FunctionCallContext ctx) {
-        System.out.println("Function call");
         return treeAddressCode;
     }
    
@@ -648,7 +639,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         if(ctx.getChild(0) instanceof FunctionDeclarationContext) {
             visitFunctionDeclaration(ctx.functionDeclaration());
             visitInstructions(ctx.compoundInstruction().instructions());
-            treeAddressCode += "\njmp returnAddress\n";
+            treeAddressCode += "\njmp " + returnLabel + "\n";
         }
         return treeAddressCode;
     }
@@ -668,7 +659,8 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
         String entryLabel = ctx.ID().getText();
         treeAddressCode += "\n" + entryLabel;
-        treeAddressCode += "\nreturnAddress = pop";
+        returnLabel = labelGenerator.getNewLabel();
+        treeAddressCode += "\n" + returnLabel + " = pop";
 
         if(ctx.parameters().ID() != null)
             visitParameters(ctx.parameters());
@@ -692,6 +684,83 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
     
+    /**
+     * visitFunctionCall()
+     * 
+     * @brief Visits callParameters node to push the parameters onto the stack.
+     *        Pushes the return label and makes a jump to te function label.
+     *        Finally, if the function is non void, pops the result from the stack
+     *          and stores it in a variable.
+     * @rule functionCall : ID PARENTHESES_O callParameters PARENTHESES_C
+     *                    ;
+     */
+    @Override
+    public String visitFunctionCall(FunctionCallContext ctx) {
+        visitCallParameters(ctx.callParameters());
+
+        String returnLabel = labelGenerator.getNewLabel();
+        treeAddressCode += "\npush " + returnLabel;
+        treeAddressCode += "\njump " + ctx.ID().getText();
+        treeAddressCode += "\n" + returnLabel;
+        
+        if(ctx.getParent() instanceof FactorContext) { //Non void
+            String returnValue = variableGenerator.getNewVariable();
+            treeAddressCode += "\n" + returnValue + " = pop";
+            operands.push(returnValue);
+        }
+
+        return treeAddressCode;
+    }
+
+    /**
+     * visitCallParameters()
+     * 
+     * @brief visit children.
+     * @rule callParameters : parameter 
+     *                      | parameter COMMA callParameters
+     *                      |
+     *                      ;
+     */
+    @Override
+    public String visitCallParameters(CallParametersContext ctx) {
+        visitChildren(ctx);
+        return treeAddressCode;
+    }
+
+    /**
+     * visitParameter()
+     * 
+     * @brief Puts the function parameters on the stack according to the call convection.
+     * @rule parameter : NUMBER
+     *                 | CHARACTER
+     *                 | ID
+     *                 | functionCall
+     *                 | logicalArithmeticExpression
+     *                 ;
+     */
+    @Override
+    public String visitParameter(ParameterContext ctx) {
+        if(ctx.NUMBER() != null) {
+            treeAddressCode += "\npush " + ctx.NUMBER().getText();
+        }
+        else if(ctx.CHARACTER() != null) {
+            char operand = ctx.CHARACTER().getText().charAt(1);
+            treeAddressCode += "\npush " + String.valueOf((int) operand);
+        }
+        else if(ctx.ID() != null) {
+            treeAddressCode += "\npush " + ctx.ID().getText();
+        }
+        else if(ctx.logicalArithmeticExpression() != null) {
+            visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression());
+            treeAddressCode += "\npush " + operands.pop();
+        }
+        else if(ctx.functionCall() != null) {
+            visitFunctionCall(ctx.functionCall());
+            treeAddressCode += "\npush " + operands.pop();
+        }
+        return treeAddressCode;
+    }
+
     
 
 }

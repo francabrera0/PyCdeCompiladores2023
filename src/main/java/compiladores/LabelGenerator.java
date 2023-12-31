@@ -28,7 +28,7 @@ public class LabelGenerator {
     }    
 
     public String getLastLabel() {
-        return labels.pop();
+        return labels.getLast();
     }
 
     public String getNewLabel() {

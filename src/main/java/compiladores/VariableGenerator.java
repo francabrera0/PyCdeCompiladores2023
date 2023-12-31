@@ -28,7 +28,7 @@ public class VariableGenerator {
     }    
 
     public String getLastVariable() {
-        return variables.pop();
+        return variables.getLast();
     }
 
     public String getNewVariable() {
