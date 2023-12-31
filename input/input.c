@@ -1,12 +1,16 @@
+int foo(int a, int b, char c);
+
 int main() {
 
     int a = 10;
     
-    for(int i=5; i>1 && i<19/4; i--) {
-        a = i+5;
-    }
-
     while(1){}
 
     return 0;
+}
+
+int foo(int a, int b, char c) {
+    a = 12+5;
+    b = 13>a;
+    return a+b+c;
 }

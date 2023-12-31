@@ -13,12 +13,15 @@ import compiladores.compiladoresParser.ConditionContext;
 import compiladores.compiladoresParser.FactorContext;
 import compiladores.compiladoresParser.ForStatementContext;
 import compiladores.compiladoresParser.FunctionCallContext;
+import compiladores.compiladoresParser.FunctionDeclarationContext;
+import compiladores.compiladoresParser.FunctionStatementContext;
 import compiladores.compiladoresParser.IncDecContext;
 import compiladores.compiladoresParser.InitContext;
 import compiladores.compiladoresParser.InstructionContext;
 import compiladores.compiladoresParser.InstructionsContext;
 import compiladores.compiladoresParser.LogicalArithmeticExpressionContext;
 import compiladores.compiladoresParser.LogicalExpressionContext;
+import compiladores.compiladoresParser.ParametersContext;
 import compiladores.compiladoresParser.ProgramContext;
 import compiladores.compiladoresParser.ReturnStatementContext;
 import compiladores.compiladoresParser.StatementContext;
@@ -630,4 +633,65 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         return treeAddressCode;
     }
     
+    /**
+     * visitFunctionStatement()
+     * 
+     * @brief Visit functionDeclaration node to insert the input label, return address and parameters.
+     *        Then it visits the instructions node to add the function's instructions.
+     *        Finally adds a jump to the return address.
+     * @rule functionStatement : functionDeclaration compoundInstruction
+     *                         | functionPrototype
+     *                         ;
+     */
+    @Override
+    public String visitFunctionStatement(FunctionStatementContext ctx) {
+        if(ctx.getChild(0) instanceof FunctionDeclarationContext) {
+            visitFunctionDeclaration(ctx.functionDeclaration());
+            visitInstructions(ctx.compoundInstruction().instructions());
+            treeAddressCode += "\njmp returnAddress\n";
+        }
+        return treeAddressCode;
+    }
+
+    /**
+     * visitFunctionDeclaration()
+     * 
+     * @brief This function performs the following steps:
+     *          - Adds the entry label (same as function ID)
+     *          - Add the returnAddress
+     *          - If the function has parameters, visits the corresponding nodes.
+     * @rule functionDeclaration : TYPE ID PARENTHESES_O parameters PARENTHESES_C
+     *                           ;
+     */
+    @Override
+    public String visitFunctionDeclaration(FunctionDeclarationContext ctx) {
+
+        String entryLabel = ctx.ID().getText();
+        treeAddressCode += "\n" + entryLabel;
+        treeAddressCode += "\nreturnAddress = pop";
+
+        if(ctx.parameters().ID() != null)
+            visitParameters(ctx.parameters());
+
+        return treeAddressCode;
+    }
+
+    /**
+     * visitParameters()
+     * 
+     * @brief Adds all function parameters.
+     * @rule parameters : TYPE ID
+     *                  | TYPE ID COMMA parameters
+     *                  |
+     *                  ;
+     */
+    @Override
+    public String visitParameters(ParametersContext ctx) {
+        treeAddressCode += "\n" + ctx.ID().getText() + " = pop" ;
+        visitChildren(ctx);
+        return treeAddressCode;
+    }
+    
+    
+
 }
