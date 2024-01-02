@@ -1,0 +1,58 @@
+@startuml sequence
+participant Listener
+participant symbolTable
+participant FunctionCallContext
+participant Function
+participant DataType
+
+Listener -> FunctionCallContext: exitFunctionCall(ctx)
+activate FunctionCallContext
+Listener -> symbolTable: searchSymbol(ctx.ID().getText())
+activate symbolTable
+symbolTable --> Listener: Function
+deactivate symbolTable
+alt Function exists
+    Listener -> Function: getDataType()
+    activate Function
+    Function --> Listener: DataType
+    deactivate Function
+    alt DataType is VOID
+        alt Parent is FactorContext
+            Listener -> Listener: error: void value not ignored as it ought to be
+        end
+    else
+        Listener -> Function: getDataTypeArgs()
+        activate Function
+        Function --> Listener: expectedParameters
+        deactivate Function
+        loop through callParameters
+            alt parameter is number
+                ...
+            else if parameter is character
+                ...
+            else if parameter is variable
+                ...
+            else if parameter is incDec
+                ...
+            else if parameter is function call
+                ...
+            else if parameter is logical/arithmetic expression
+                ...
+            else if parameter is assignment
+                ...
+            end
+        end
+        alt compare parameters with expectedParameters
+            Listener -> Listener: error: In function invalid parameters
+        else
+            Listener -> Function: setUsed(true)
+            activate Function
+            Function --> Listener: confirmation
+            deactivate Function
+        end
+    end
+else
+    Listener -> Listener: error: implicit declaration of function
+end
+deactivate FunctionCallContext
+@enduml
