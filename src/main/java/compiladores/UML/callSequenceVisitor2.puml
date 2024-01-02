@@ -1,0 +1,29 @@
+@startuml Visitor2
+participant Visitor
+participant FunctionCallContext
+participant LogicalArithmeticExpressionContext
+
+activate Visitor
+Visitor -> Visitor: visitParameter(ctx)
+
+alt ctx.NUMBER() != null
+    Visitor -> Visitor: treeAddressCode += "\npush " + ctx.NUMBER().getText()
+else if ctx.CHARACTER() != null
+    Visitor -> Visitor: treeAddressCode += "\npush " + String.valueOf((int) ctx.CHARACTER().getText().charAt(1))
+else if ctx.ID() != null
+    Visitor -> Visitor: treeAddressCode += "\npush " + ctx.ID().getText()
+else if ctx.logicalArithmeticExpression() != null
+    activate LogicalArithmeticExpressionContext
+    Visitor -> LogicalArithmeticExpressionContext: visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression())
+    deactivate LogicalArithmeticExpressionContext
+    Visitor -> Visitor: treeAddressCode += "\npush " + operands.pop()
+else if ctx.functionCall() != null
+    activate FunctionCallContext
+    Visitor -> FunctionCallContext: ctx.functionCall()
+    deactivate FunctionCallContext
+    Visitor -> Visitor: treeAddressCode += "\npush " + operands.pop()
+end
+
+Visitor --> Visitor: return treeAddressCode
+deactivate Visitor
+@enduml

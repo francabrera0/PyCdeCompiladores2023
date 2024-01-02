@@ -120,4 +120,14 @@ Por último, modifica la tabla de símbolos para indicar que la función ha sido
 
 # Generación de Código Intermedio
 
+El código intermedio que se genera en esta etapa es conocido como código de tres direcciones, debido a que en cada instrucción sólo pueden verse afectadas hasta tres direcciones de memoria. Este código es demasiado similar a un código en lenguaje assembly.
+
+Una vez que llegamos a esta etapa, tenemos un árbol semántico que no tiene errores léxicos, sintácticos ni semánticos, por lo tanto nos asegura que podemos generar un código intermedio (no quiere decir que el código haga lo que nosotros queremos pero si cumple con las reglas del lenguaje).
+
+Para la generación de este código intermedio, se utilizan los visitors generados por ANTLR para recorrer el árbol. A diferencia de los Listeners, con el Visitor el programador tiene el control para decidir en que momento visitar un nodo particular. 
+
+Siguiendo con el ejemplo, veremos la generación de código intermedio para una llamada a función.
+
+
+
 # Optimización de Código Intermedio

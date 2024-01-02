@@ -1,0 +1,31 @@
+@startuml visitor
+participant Visitor
+participant LabelGenerator
+participant VariableGenerator
+participant Operands
+
+activate Visitor
+Visitor -> Visitor: visitFunctionCall(ctx)
+Visitor -> Visitor: visitCallParameters(ctx)
+activate LabelGenerator
+Visitor -> LabelGenerator: getNewLabel("RetFuncCall")
+LabelGenerator --> Visitor: returnLabel
+deactivate LabelGenerator
+Visitor -> Visitor: treeAddressCode += "\npush " + returnLabel
+Visitor -> Visitor: treeAddressCode += "\njump " + ctx.ID().getText()
+Visitor -> Visitor: treeAddressCode += "\n" + returnLabel
+
+alt ctx.getParent() instanceof FactorContext
+    activate VariableGenerator
+    Visitor -> VariableGenerator: getNewVariable()
+    VariableGenerator --> Visitor: returnValue
+    deactivate VariableGenerator
+    Visitor -> Visitor: treeAddressCode += "\n" + returnValue + " = pop"
+    Visitor -> Operands: operands.push(returnValue)
+    activate Operands
+    deactivate Operands
+end
+
+Visitor --> Visitor: return treeAddressCode
+deactivate Visitor
+@enduml
