@@ -31,8 +31,8 @@ public class LabelGenerator {
         return labels.getLast();
     }
 
-    public String getNewLabel() {
-        String newLabel = "l" + numberOfLabels++;
+    public String getNewLabel(String labelType) {
+        String newLabel = "l" + labelType+ numberOfLabels++;
         labels.add(newLabel);
 
         return newLabel;

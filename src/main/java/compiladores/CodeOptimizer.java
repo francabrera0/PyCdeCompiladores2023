@@ -1,15 +1,17 @@
 package compiladores;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.stringtemplate.v4.compiler.STParser.mapExpr_return;
 
 public class CodeOptimizer {
     
     private String initialCode;
     private String optimizedCode;
-    private String filePathOut = "./optimizedIntermediateCode.log";
+    private String filePath = "./optimizedIntermediateCode.log";
 
     public CodeOptimizer(String initialCode) {
         this.initialCode = initialCode;
@@ -22,7 +24,17 @@ public class CodeOptimizer {
         optimizedCode = removeUnnecessaryAssignmets(initialCode);
 
         System.out.println("\n-------------------\n<<Optimizer end>>\n-------------------");
-        //Write code into a file
+
+        File file = new File(filePath);
+        if(file.exists())
+            file.delete();
+        
+        try(FileWriter fileWriter = new FileWriter(filePath)){
+            fileWriter.write(optimizedCode);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+
         return optimizedCode;
     }
 
