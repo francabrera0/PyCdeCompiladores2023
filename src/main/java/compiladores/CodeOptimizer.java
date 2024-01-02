@@ -64,13 +64,13 @@ public class CodeOptimizer {
 
         String[] lines = code.split("\n");
 
-        Pattern pattern = Pattern.compile("\\b([a-zA-Z0-9]+)\\s?=\\s?t(\\d+)\\b");
+        Pattern pattern = Pattern.compile("\\b([a-zA-Z0-9]+)\\s?=\\s?(t(?!.*[*/+\\-=<>|&])\\d+)\\b");
 
         for (String line : lines) {
             Matcher matcher = pattern.matcher(line);
             if(matcher.find()) {
                 String left = matcher.group(1);
-                String right = "t"+matcher.group(2);
+                String right = matcher.group(2);
                 optCode = optCode.replace(right, left);
             }
             else {
