@@ -26,6 +26,7 @@ public class CodeOptimizer {
 
         optimizedCode = removeUnnecessaryAssignmets(initialCode);
         optimizedCode = removeUnusedVariables(optimizedCode);
+        optimizedCode = removeLineBreak(optimizedCode);
 
         System.out.println("\n-------------------\n<<Optimizer end>>\n-------------------");
 
@@ -42,6 +43,22 @@ public class CodeOptimizer {
         return optimizedCode;
     }
 
+    /**
+     * Find expressions like some = t_n. Then replace all occurrences of t_n with wht 
+     *  value on the left.
+     * 
+     * Example:
+     *  
+     *      t1 = 10*5
+     *      t2 = t1
+     *      a = t2
+     *      .........
+     *      t2 = 10*5
+     *      a = t2
+     *      .........
+     *      a = 10*5
+     * 
+     */
     public String removeUnnecessaryAssignmets(String code) {
         String optCode = "";
 
@@ -64,6 +81,11 @@ public class CodeOptimizer {
         return optCode;
     }
 
+    /**
+     * First finds assigned variables and then walks through the code seeing if they
+     *  are actually used
+     * 
+     */
     public String removeUnusedVariables(String code) {
         
         LinkedList<String> lines = new LinkedList<>(Arrays.asList(code.split("\n")));
@@ -93,6 +115,24 @@ public class CodeOptimizer {
         String optCode = "";    
         for(String line : lines)
             optCode += line + "\n";
+
+        return optCode;
+    }
+
+    /**
+     * Remove all line breaks
+     * 
+     */
+    public String removeLineBreak(String code) {
+        String optCode = "";
+
+        LinkedList<String> lines = new LinkedList<>(Arrays.asList(code.split("\n")));
+
+        for(String line : lines) {
+            if(!line.trim().isEmpty()) {
+                optCode += line + "\n";
+            }
+        }
 
         return optCode;
     }
