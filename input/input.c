@@ -1,6 +1,7 @@
 double average(int a, int b, int c);
 
 int main() {
+    int variable = 3;
     int a, b, c;
 
     a = 10*5;

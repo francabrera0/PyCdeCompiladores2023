@@ -3,8 +3,11 @@ package compiladores;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 
 public class CodeOptimizer {
@@ -22,6 +25,7 @@ public class CodeOptimizer {
         System.out.println("\n-------------------\n<<Optimizer begin>>\n-------------------");
 
         optimizedCode = removeUnnecessaryAssignmets(initialCode);
+        optimizedCode = removeUnusedVariables(optimizedCode);
 
         System.out.println("\n-------------------\n<<Optimizer end>>\n-------------------");
 
@@ -56,6 +60,39 @@ public class CodeOptimizer {
                 optCode += line + "\n";
             }
         }
+
+        return optCode;
+    }
+
+    public String removeUnusedVariables(String code) {
+        
+        LinkedList<String> lines = new LinkedList<>(Arrays.asList(code.split("\n")));
+        LinkedList<Integer> toRemove = new LinkedList<>();
+
+        Pattern pattern = Pattern.compile("\\b(\\w+)\\s?=\\s?(\\w+)\\b");
+
+        for(int i=0; i<lines.size(); i++) {
+            Matcher matcher = pattern.matcher(lines.get(i));
+
+            if(matcher.find()) {
+                toRemove.push(i);
+                for(int j=0; j<lines.size(); j++) {
+                    String line = lines.get(j);
+                    String match = matcher.group(1);
+                    if (line.contains(match) && j!=i) {
+                        toRemove.pop();
+                        break;
+                    }
+                }
+            }
+            
+        }
+
+        for(int index : toRemove)
+            lines.remove(index);
+        String optCode = "";    
+        for(String line : lines)
+            optCode += line + "\n";
 
         return optCode;
     }
