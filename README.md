@@ -6,7 +6,7 @@ Práctica y Construcción de Compiladores - FCEFyN - UNC
 
 # Introducción 
 
-En el mundo de la programación, los compiladores juegan un papel fundamental al traducir el código fuente de un lenguaje de programación a instrucciones ejecutables por una máquina. En el presente proyecto, se desarrolló un compilador para un lenguaje reducido basado en C. Este lenguaje, aunque inspirado en C, ha sido diseñado para presentar una versión simplificada, donde se han reducido ciertas funcionalidades y complejidades, manteniendo la esencia y estructura básica del lenguaje original.
+En el presente proyecto, se desarrolló un compilador para un lenguaje reducido basado en C. Este lenguaje, aunque inspirado en C, ha sido diseñado para presentar una versión simplificada, donde se han reducido ciertas funcionalidades y complejidades, manteniendo la esencia y estructura básica del lenguaje original.
 
 El objetivo principal de este proyecto es explorar los fundamentos del diseño y desarrollo de compiladores al abordar un lenguaje de programación simplificado. Se busca comprender en detalle el proceso de análisis léxico, sintáctico y semántico, así como la generación de código intermedio y la optimización básica.
 
@@ -16,9 +16,7 @@ En este proyecto no se abordarán las etapas de generación y optimización de c
 
 ## Herramientas
 
-Para el desarrollo de este proyecto se utilizará ANTLR (Another Tool for Language Recognition). Esta es una herramienta de generación de analizadores para reconocer y procesar lenguajes tanto para su análisis léxico como sintáctico. Permite definir gramáticas mediante reglas y generar código (en nuestro caso JAVA) para construir analizadores que puedan reconocer la estructura de un lenguaje específico.
-
----
+Para el desarrollo de este proyecto se utilizará ANTLR (Another Tool for Language Recognition). Esta es una herramienta de generación de analizadores para reconocer y procesar lenguajes tanto para su análisis léxico como sintáctico. Permite definir gramáticas mediante reglas y genera código (en nuestro caso JAVA) para construir analizadores que puedan reconocer la estructura de un lenguaje específico.
 
 # Análisis Léxico
 
@@ -27,7 +25,6 @@ El análisis léxico es la primera fase del proceso de compilación. Recibe como
 En la primera parte del archivo `compiladores.g4`, se pueden observar las expresiones regulares utilizadas para definir los tokens del lenguaje.
 
 Con el objetivo de analizar cada una de las etapas del compilador, se tomará de ejemplo el caso de una llamada a función, comenzando con las reglas léxicas necesarias para esto:
-
 
 ```g4
 fragment LETTER : [A-Za-z];
@@ -65,7 +62,7 @@ CHARACTER : '\'' PRINTABLE_ASCCI '\'';
 
 La siguiente fase del proceso de compilación trabaja en conjunto con la anterior. Mientras que el análisis léxico se enfoca en la estructura léxica del código fuente, el análisis sintáctico, se concentra en la estructura gramatical del mismo, verificando si los tokens generados siguen la secuencia y la sintaxis correcta definida por la gramática del lenguaje. 
 
-Al finalizar esta etapa, si no hubo errores, se obtiene un árbol sintáctico que refleja la organización de las construcciones del lenguaje de programación, siendo un reflejo directo de las reglas gramaticales definidas para el mismo.
+Al finalizar esta etapa, si no hubo errores, se obtiene un árbol sintáctico que es un reflejo directo de las reglas gramaticales definidas para el mismo.
 
 En el archivo `compiladores.g4` se encuentran definidas todas las reglas gramaticales para el lenguaje.
 
@@ -88,8 +85,6 @@ parameter : NUMBER
           ;
 ```
 
-Lo primero que se debe notar es la presencia de las reglas léxicas analizadas anteriormente dentro de las reglas gramaticales.
-
 La primera regla fija la estructura general de una llamada a función, la misma debe comenzar con un ID (nombre de la función) y luego se deben colocar entre paréntesis un listado de parámetros.
 
 Este listado de parámetros se define en la regla callParameters, donde vemos que la lista puede contener 0 o más parámetros.
@@ -101,7 +96,7 @@ Cada uno de los parámetros a su vez puede ser, un número, un caracter, un ID, 
 
 El análisis semántico es la fase del proceso de compilación que se encarga de verificar las reglas y restricciones semánticas del código fuente que no pueden ser verificadas por las etapas anteriores. Va más allá de la estructura gramatical y se enfoca en el significado y la lógica del código.
 
-En este caso, se hace uso de los listeners creados por ANTLR para recorrer el árbol sintáctico generado en la etapa anterior para realizar el análisis semántico. Estos listeners permiten recorrer de forma automática ya que genera eventos al entrar y salir de ciertos nodos.
+En este caso, se hace uso del Listener creado por ANTLR para recorrer el árbol sintáctico generado en la etapa anterior. Este Listener permite recorrer de forma automática el árbol ya que genera eventos al entrar y salir de ciertos nodos.
 
 ### Tabla de símbolos 
 En esta etapa es de suma importancia la generación de una tabla de símbolos. Esta, es una estructura de datos para almacenar información sobre los identificadores encontrados en el código fuente. Sirve como una especie de diccionario que mapea los nombres de variables, funciones, tipos u otros símbolos a información relevante asociada a ellos (Identificador, alcance (scope) y contexto, verificación de tipos, estado, etc).
@@ -112,7 +107,7 @@ Para analizar esto, veamos un diagrama de secuencias simplificado de la función
 
 Lo primero que hace al salir de este nodo es buscar el ID de la función en la tabla de símbolos, la búsqueda se hace desde el contexto actual hacia arriba (la función puede estar definida en un contexto mayor). En caso de que la función no exista se lanza un error.
 
-Luego, pregunta por el tipo de la función (tipo de dato que retorna). En caso de que sea VOID, verifica que la llamada a función no sea un factor (si fuese un factor significa que necesita usar el valor de retorno), si es un factor lanza un error.
+Luego, obtiene el tipo de la función (tipo de dato que retorna). En caso de que sea VOID, verifica que la llamada a función no sea un factor (si fuese un factor significa que necesita usar el valor de retorno). Si es un factor lanza un error.
 
 Ahora, si la función no es void, comienza a recorrer los parámetros ingresados y los compara contra los de la función (consulta a la tabla de símbolos por los parámetros esperados). Realiza una comparación entre los parámetros obtenidos y los esperados y lanza un error (o nó) en función del resultado.
 
@@ -124,7 +119,7 @@ El código intermedio que se genera en esta etapa es conocido como código de tr
 
 Una vez que llegamos a esta etapa, tenemos un árbol semántico que no tiene errores léxicos, sintácticos ni semánticos, por lo tanto nos asegura que podemos generar un código intermedio (no quiere decir que el código haga lo que nosotros queremos pero si cumple con las reglas del lenguaje).
 
-Para la generación de este código intermedio, se utilizan los visitors generados por ANTLR para recorrer el árbol. A diferencia de los Listeners, con el Visitor el programador tiene el control para decidir en que momento visitar un nodo particular. 
+Para la generación de este código intermedio, se utiliza el Visitor generado por ANTLR para recorrer el árbol. A diferencia del Listener, con el Visitor el programador tiene el control para decidir en que momento visitar un nodo particular. 
 
 Si volvemos a analizar las reglas gramaticales definidas anteriormente (análisis sintáctico) podemos ver que una llamada a función está formada por su ID y un listado de parámetros encerrados entre paréntesis. Por lo tanto para recorrer esta parte del árbol, debemos primero llamar a la función visitFunctionCall() para visitar este nodo que es la raíz del sub árbol de llamada a función.
 
@@ -136,7 +131,7 @@ Se observa que, en función del tipo de parámetro se realiza la acción necesar
 
 En caso de que el parámetro sea otra llamada a función o una expresión aritmética lógica, primero se llama al visit correspondiente y luego se saca de la lista de operandos el parámetro ya calculado.
 
-Una vez que se agregaron los parámetros a la pila, lo siguiente es añadir la dirección de retorno a la pila para que la función llamada tenga la referencia de a donde regresar. Pra esto primero solicita al labelGenerator una nueva etiqueta y agrega al código el push correspondiente.
+Una vez que se agregaron los parámetros a la pila, lo siguiente es añadir la dirección de retorno a la pila para que la función llamada tenga la referencia de a donde regresar. Para esto primero solicita al labelGenerator una nueva etiqueta y agrega al código el push correspondiente.
 
 Seguido a esto, se agrega el salto a la función, la etiqueta que se usa para este salto es el mismo nombre de la función.
 
@@ -149,7 +144,7 @@ Por último, verifica si la función es un factor (su valor es utilizado en otra
 
 # Optimización de Código Intermedio
 
-Una vez obtenido el código de tres direcciones, el enfoque siguiente implica aplicar optimizaciones para reducir líneas innecesarias y mejorar el rendimiento. Esta etapa involucra la identificación de patrones mediante expresiones regulares, los cuales son reemplazados por versiones más simples para minimizar el código. Las optimizaciones que se realizaron son:
+Una vez obtenido el código de tres direcciones, se aplican una serie de optimizaciones para reducir líneas innecesarias y mejorar el rendimiento. Esta etapa involucra la identificación de patrones mediante expresiones regulares, los cuales son reemplazados por versiones más simples para minimizar el código. Las optimizaciones que se realizaron son:
 
 - Eliminación de asignaciones redundantes.
 - Eliminación de variables no utilizadas.
@@ -217,7 +212,7 @@ Para el análisis semántico, podemos analizar la tabla de símbolos. Esta tabla
 
 ![](./img/semantico.png)
 
-En el recuadro A, podemos observar que tenemos el contexto global (context1) que contiene las funciones getMajor() y main(). En el caso de la función getMajor() nos dice que ha sido usada (es usada en la línea 7 del código) pero aún no ha sido inicializada, ya que es un prototipo de función. Recién en el recuadro C podemos observar que la función ha sido inicializada (ya entro en la declaración).
+Por ejemplo, en el recuadro A, podemos observar que tenemos el contexto global (context1) que contiene las funciones getMajor() y main(). En el caso de la función getMajor() nos dice que ha sido usada (es usada en la línea 7 del código) pero aún no ha sido inicializada, ya que es un prototipo de función. Recién en el recuadro C podemos observar que la función ha sido inicializada (ya entro en la declaración).
 Siguiendo en el recuadro A, también el context2 corresponde al contexto local de la función main, por lo cual podemos ver las variables que se definen. Por último, el context 3 es el correspondiente al while.
 
 Por último, analizaremos el código intermedio generado y su optimización:
