@@ -1,12 +1,9 @@
 @startuml sequence
 participant Listener
 participant symbolTable
-participant FunctionCallContext
 participant Function
-participant DataType
 
-Listener -> FunctionCallContext: exitFunctionCall(ctx)
-activate FunctionCallContext
+Listener -> Listener: exitFunctionCall(ctx)
 Listener -> symbolTable: searchSymbol(ctx.ID().getText())
 activate symbolTable
 symbolTable --> Listener: Function
@@ -54,5 +51,4 @@ alt Function exists
 else
     Listener -> Listener: error: implicit declaration of function
 end
-deactivate FunctionCallContext
 @enduml

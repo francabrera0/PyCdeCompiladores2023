@@ -103,7 +103,7 @@ El análisis semántico es la fase del proceso de compilación que se encarga de
 
 En este caso, se hace uso de los listeners creados por ANTLR para recorrer el árbol sintáctico generado en la etapa anterior para realizar el análisis semántico. Estos listeners permiten recorrer de forma automática ya que genera eventos al entrar y salir de ciertos nodos.
 
-## Tabla de símbolos 
+### Tabla de símbolos 
 En esta etapa es de suma importancia la generación de una tabla de símbolos. Esta, es una estructura de datos para almacenar información sobre los identificadores encontrados en el código fuente. Sirve como una especie de diccionario que mapea los nombres de variables, funciones, tipos u otros símbolos a información relevante asociada a ellos (Identificador, alcance (scope) y contexto, verificación de tipos, estado, etc).
 
 Para analizar esto, veamos un diagrama de secuencias simplificado de la función exitFunctionCall() que es la que se dispara cada vez que se sale de un nodo functionCall.
@@ -120,14 +120,31 @@ Por último, modifica la tabla de símbolos para indicar que la función ha sido
 
 # Generación de Código Intermedio
 
-El código intermedio que se genera en esta etapa es conocido como código de tres direcciones, debido a que en cada instrucción sólo pueden verse afectadas hasta tres direcciones de memoria. Este código es demasiado similar a un código en lenguaje assembly.
+El código intermedio que se genera en esta etapa es conocido como código de tres direcciones, debido a que en cada instrucción sólo pueden verse afectadas hasta tres direcciones de memoria.
 
 Una vez que llegamos a esta etapa, tenemos un árbol semántico que no tiene errores léxicos, sintácticos ni semánticos, por lo tanto nos asegura que podemos generar un código intermedio (no quiere decir que el código haga lo que nosotros queremos pero si cumple con las reglas del lenguaje).
 
 Para la generación de este código intermedio, se utilizan los visitors generados por ANTLR para recorrer el árbol. A diferencia de los Listeners, con el Visitor el programador tiene el control para decidir en que momento visitar un nodo particular. 
 
-Siguiendo con el ejemplo, veremos la generación de código intermedio para una llamada a función.
+Si volvemos a analizar las reglas gramaticales definidas anteriormente (análisis sintáctico) podemos ver que una llamada a función está formada por su ID y un listado de parámetros encerrados entre paréntesis. Por lo tanto para recorrer esta parte del árbol, debemos primero llamar a la función visitFunctionCall() para visitar este nodo que es la raíz del sub árbol de llamada a función.
 
+Por la convención de llamadas de C, los parámetros de la función se pasan a través de la pila, por lo tanto lo primero que se debe hacer al ingresar a la llamada a función es hacer un push de todos los parámetros a la pila. Para ver esto, analizaremos el método visitParameter() (Se ignora visitCallParameters() debido a que aquí unicamente se visita a los parámetros).
+
+![](./img/Visitor2.png)
+
+Se observa que, en función del tipo de parámetro se realiza la acción necesaria y luego se agrega al código de tres direcciones la instrucción push seguida del parámetro.
+
+En caso de que el parámetro sea otra llamada a función o una expresión aritmética lógica, primero se llama al visit correspondiente y luego se saca de la lista de operandos el parámetro ya calculado.
+
+Una vez que se agregaron los parámetros a la pila, lo siguiente es añadir la dirección de retorno a la pila para que la función llamada tenga la referencia de a donde regresar. Pra esto primero solicita al labelGenerator una nueva etiqueta y agrega al código el push correspondiente.
+
+Seguido a esto, se agrega el salto a la función, la etiqueta que se usa para este salto es el mismo nombre de la función.
+
+Luego, se agrega al código la etiqueta de retorno (aquí continuará el código cuando se ejecute un ret en la sub rutina).
+
+Por último, verifica si la función es un factor (su valor es utilizado en otra expresión), en caso de ser verdadero, genera una nueva variable para almacenar el valor y lo extrae de la pila con una instrucción pop.
+
+![](./img/visitor.png)
 
 
 # Optimización de Código Intermedio
