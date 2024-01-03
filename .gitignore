@@ -8,3 +8,4 @@ compiladores*.java
 *.jar
 *.tokens
 *.log
+*.excalidraw

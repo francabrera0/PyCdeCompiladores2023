@@ -363,11 +363,6 @@ public class Listener extends compiladoresBaseListener{
                 else if(parameter.logicalArithmeticExpression() != null)  //Parameter is an opal
                     parameters.add(DataType.INT);
                 
-                else if(parameter.assignment() != null) { //Parameter is an assignment
-                    Variable variable = (Variable) symbolTable.searchSymbol(parameter.assignment().ID().getText());
-                    parameters.add(variable.getDataType());
-                }
-
                 if (callParameters.getChildCount() == 3)
                     callParameters = (CallParametersContext) callParameters.getChild(2);
                 else 

@@ -314,6 +314,7 @@ callParameters : parameter
 parameter : NUMBER
           | CHARACTER
           | ID
+          | incDec
           | functionCall
           | logicalArithmeticExpression
           ;
