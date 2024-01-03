@@ -24,7 +24,7 @@ Para el desarrollo de este proyecto se utilizará ANTLR (Another Tool for Langua
 
 El análisis léxico es la primera fase del proceso de compilación. Recibe como entrada una secuencia de caracteres (código fuente) y lo convierte en una secuencia de tokes significativos para el compilador. Los tokens son unidades léxicas con significado semántico, como palabras reservadas, identificadores, operadores, constantes, que forman la base para la siguiente etapa de análisis sintáctico.
 
-En la primera parte del archivo `compiladores.g4`, se pueden observar las expresiones regulares utilizadas para definir las palabras reservadas, operadores, identificadores de variables y tipos de variables.
+En la primera parte del archivo `compiladores.g4`, se pueden observar las expresiones regulares utilizadas para definir los tokens del lenguaje.
 
 Con el objetivo de analizar cada una de las etapas del compilador, se tomará de ejemplo el caso de una llamada a función, comenzando con las reglas léxicas necesarias para esto:
 
@@ -157,3 +157,75 @@ Una vez obtenido el código de tres direcciones, el enfoque siguiente implica ap
 
 Estas acciones buscan no solo reducir la complejidad del código, sino también mejorar su eficiencia y legibilidad.
 
+# Ejemplo básico de compilación de un programa
+
+Ahora utilizaremos un programa simple para ir analizando las salidas de cada etapa y el resultado final.
+
+El código de ejemplo es el siguiente:
+
+```c
+int getMajor(int, int);
+
+int main() {
+    int a = 3*4+5;
+    int b = a++*2/5;
+
+    int major = getMajor(a, b);
+
+    while(major) {
+        major = major -1;
+    }
+
+    return 0;
+}
+
+int getMajor(int operand1, int operand2) {
+    
+    int major = 0;
+    if(operand1 > operand2)
+        major = operand1;
+    else
+        major = operand2;
+
+    return major;
+}
+```
+
+Lo primero que podemos observar es el árbol sintáctico generado. Este árbol tiene un tamaño muy grande debido a la longitud del código, por lo tanto se muestra un detalle de la primera instrucción que tiene el código que es la declaración de un prototipo de función.
+
+![](./img/sintactico.png)
+
+Si analizamos la regla gramatical definida, podemos ver los nodos que se generaron en el árbol para esta entrada.
+
+```g4
+functionStatement : functionDeclaration compoundInstruction
+                  | functionPrototype
+                  ;
+
+functionPrototype : TYPE ID PARENTHESES_O parametersPrototype PARENTHESES_C SEMICOLON
+                  ;
+
+parametersPrototype : TYPE ID
+                    | TYPE ID COMMA parametersPrototype
+                    | TYPE
+                    | TYPE COMMA parametersPrototype
+                    |
+                    ;
+```
+
+Para el análisis semántico, podemos analizar la tabla de símbolos. Esta tabla es escrita en un archivo cada vez que se sale de un contexto (así podemos analizar cada uno de los contextos de manera completa).
+
+![](./img/semantico.png)
+
+En el recuadro A, podemos observar que tenemos el contexto global (context1) que contiene las funciones getMajor() y main(). En el caso de la función getMajor() nos dice que ha sido usada (es usada en la línea 7 del código) pero aún no ha sido inicializada, ya que es un prototipo de función. Recién en el recuadro C podemos observar que la función ha sido inicializada (ya entro en la declaración).
+Siguiendo en el recuadro A, también el context2 corresponde al contexto local de la función main, por lo cual podemos ver las variables que se definen. Por último, el context 3 es el correspondiente al while.
+
+Por último, analizaremos el código intermedio generado y su optimización:
+
+![](./img/intermedio.png)
+
+Aquí se detallan todas las simplificaciones que se realizaron para disminuir la cantidad de instrucciones del código generado.
+
+Por último, se valida que las instrucciones del código intermedio coincidan con el código fuente.
+
+![](./img/intermedioFuente.png)
