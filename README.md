@@ -148,3 +148,12 @@ Por último, verifica si la función es un factor (su valor es utilizado en otra
 
 
 # Optimización de Código Intermedio
+
+Una vez obtenido el código de tres direcciones, el enfoque siguiente implica aplicar optimizaciones para reducir líneas innecesarias y mejorar el rendimiento. Esta etapa involucra la identificación de patrones mediante expresiones regulares, los cuales son reemplazados por versiones más simples para minimizar el código. Las optimizaciones que se realizaron son:
+
+- Eliminación de asignaciones redundantes.
+- Eliminación de variables no utilizadas.
+- Limpieza de espacios en blanco dentro del código.
+
+Estas acciones buscan no solo reducir la complejidad del código, sino también mejorar su eficiencia y legibilidad.
+
