@@ -41,7 +41,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     private String treeAddressCode;                 //Buffer to store tree address code
     private String incDecInstruction;               //Buffer to store increment or decrement instruction
     private int preOrPost;                          //Control variable for the inclusion of the incDecInstruction: 0->None, 1->Pre, 2->Post
-    private LinkedList<String> incDecID;            //List used to store the ids that must be incremented or decremented
     private VariableGenerator variableGenerator;    //Variable generator
     private LabelGenerator labelGenerator;          //Label generator
     private LinkedList<String> operands;            //List used to store operands. It's useful to have the operands available from different functions
@@ -56,7 +55,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         treeAddressCode = "";
         incDecInstruction = "";
         preOrPost = 0;
-        incDecID = new LinkedList<>();
         variableGenerator = VariableGenerator.getInstanceOf();
         labelGenerator = LabelGenerator.getInstanceOf();
         operands = new LinkedList<>();
@@ -299,7 +297,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             incDecInstruction += "-1";
 
         operands.push(id);
-        incDecID.push(id);
         return treeAddressCode;
     }
    
@@ -332,24 +329,13 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         String secondOperand = operands.pop();
         String newVariable = variableGenerator.getNewVariable();
         String operator = ctx.getChild(0).getText();
-        Boolean incDec = false;
 
-        if(preOrPost!= 0) { //Check if the id incremented(decremented) is used here
-            String s = incDecID.pop();
-            if(s.equals(firstOperand) || s.equals(secondOperand))
-                incDec = true;
-            else
-                incDecID.push(s);
-        } 
-
-        if(preOrPost == 1 && incDec) treeAddressCode += incDecInstruction;
+        if(preOrPost == 1) treeAddressCode += incDecInstruction;
         treeAddressCode += "\n" + newVariable + " = " + firstOperand + operator + secondOperand; 
-        if(preOrPost == 2 && incDec) treeAddressCode+= incDecInstruction;
+        if(preOrPost == 2) treeAddressCode+= incDecInstruction;
 
-        if(incDec) {
-            preOrPost = 0;
-            incDecInstruction = "";
-        }
+        preOrPost = 0;
+        incDecInstruction = "";
 
         operands.push(newVariable);
 
@@ -361,12 +347,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
 
     /**
-     * Visitar el At para encontrar si hay sumas o restas entre terminos aritméticos.
-     * En caso de que no haya más terminos retorna. Si si hay terminos, saca el primer operandod e la 
-     * lista y realiza una visita al otro termino. EN operands volverá el operando.
-     * Arma el TAC.
-     * Verifica si hay anidaciones. 
-     * 
      * visitAt()
      * 
      * @brief This node is visited in order to find add or subs between terms.
@@ -396,24 +376,15 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         String newVariable = variableGenerator.getNewVariable();
         String operator = ctx.getChild(0).getText();
 
-        Boolean incDec = false;
 
-        if(preOrPost!= 0){ //Check if the id incremented(decremented) is used here
-            String s = incDecID.pop();
-            if(s.equals(firstOperand) || s.equals(secondOperand))
-                incDec = true;
-            else
-                incDecID.push(s);
-        } 
-
-        if(preOrPost == 1 && incDec) treeAddressCode += incDecInstruction;
+        if(preOrPost == 1) treeAddressCode += incDecInstruction;
         treeAddressCode += "\n" + newVariable + " = " + firstOperand + operator + secondOperand; 
-        if(preOrPost == 2 && incDec) treeAddressCode+= incDecInstruction;
+        if(preOrPost == 2) treeAddressCode+= incDecInstruction;
 
-        if(incDec) {
-            preOrPost = 0;
-            incDecInstruction = "";
-        }
+      
+        preOrPost = 0;
+        incDecInstruction = "";
+        
 
         operands.push(newVariable);
 
@@ -542,7 +513,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     public String visitWhileStatement(WhileStatementContext ctx) {
         
         String entryLabel = labelGenerator.getNewLabel("InWhile");
-        treeAddressCode += "\n" + entryLabel;
+        treeAddressCode += "\n" + entryLabel + ":";
 
         visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression());
         String condition = operands.pop();
@@ -554,7 +525,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         visitInstruction(ctx.instruction());
 
         treeAddressCode += "\njmp " + entryLabel;
-        treeAddressCode += "\n" + outLabel;
+        treeAddressCode += "\n" + outLabel + ":";
 
         return treeAddressCode;
     }
@@ -582,7 +553,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         visitInit(ctx.init());
         
         String entryLabel = labelGenerator.getNewLabel("InFor");
-        treeAddressCode += "\n" + entryLabel;
+        treeAddressCode += "\n" + entryLabel + ":";
 
         visitCondition(ctx.condition());
         
@@ -597,7 +568,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         visitUpdate(ctx.update());
 
         treeAddressCode += "\njmp " + entryLabel;
-        treeAddressCode += "\n" + outLabel;
+        treeAddressCode += "\n" + outLabel + ":";
 
         return treeAddressCode;
     }
@@ -681,9 +652,9 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     public String visitFunctionDeclaration(FunctionDeclarationContext ctx) {
 
         String entryLabel = ctx.ID().getText();
-        treeAddressCode += "\n" + entryLabel;
+        treeAddressCode += "\n" + entryLabel + ":";
         returnLabel = labelGenerator.getNewLabel("RetFunc");
-        treeAddressCode += "\n" + returnLabel + " = pop";
+        treeAddressCode += "\npop " + returnLabel;
 
         if(ctx.parameters().ID() != null)
             visitParameters(ctx.parameters());
@@ -703,7 +674,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     @Override
     public String visitParameters(ParametersContext ctx) {
         visitChildren(ctx);
-        treeAddressCode += "\n" + ctx.ID().getText() + " = pop" ;
+        treeAddressCode += "\npop " + ctx.ID().getText();
         return treeAddressCode;
     }
     
@@ -724,11 +695,11 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         String returnLabel = labelGenerator.getNewLabel("RetFuncCall");
         treeAddressCode += "\npush " + returnLabel;
         treeAddressCode += "\njump " + ctx.ID().getText();
-        treeAddressCode += "\n" + returnLabel;
+        treeAddressCode += "\n" + returnLabel + ":";
         
         if(ctx.getParent() instanceof FactorContext) { //Non void
             String returnValue = variableGenerator.getNewVariable();
-            treeAddressCode += "\n" + returnValue + " = pop";
+            treeAddressCode += "\npop " + returnValue;
             operands.push(returnValue);
         }
 
@@ -811,11 +782,11 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
         endElseIfLabel = labelGenerator.getNewLabel("EndElseIf");
         treeAddressCode += "\njmp " + endElseIfLabel;
-        treeAddressCode += "\n" + endIfLabel;
+        treeAddressCode += "\n" + endIfLabel + ":";
 
         visitElseIfStatement(ctx.elseIfStatement());
         
-        treeAddressCode += "\n" + endElseIfLabel;
+        treeAddressCode += "\n" + endElseIfLabel + ":";
 
         return treeAddressCode;
     }
@@ -850,7 +821,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             visitInstruction(ctx.instruction());
 
             treeAddressCode += "\njmp " + endElseIfLabel;
-            treeAddressCode += "\n" + endIfLabel;
+            treeAddressCode += "\n" + endIfLabel + ":";
 
             visitElseIfStatement(ctx.elseIfStatement());
         }
