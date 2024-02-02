@@ -654,7 +654,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         String entryLabel = ctx.ID().getText();
         treeAddressCode += "\n" + entryLabel;
         returnLabel = labelGenerator.getNewLabel("RetFunc");
-        treeAddressCode += "\n" + returnLabel + " = pop";
+        treeAddressCode += "\npop " + returnLabel;
 
         if(ctx.parameters().ID() != null)
             visitParameters(ctx.parameters());
@@ -674,7 +674,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     @Override
     public String visitParameters(ParametersContext ctx) {
         visitChildren(ctx);
-        treeAddressCode += "\n" + ctx.ID().getText() + " = pop" ;
+        treeAddressCode += "\npop " + ctx.ID().getText();
         return treeAddressCode;
     }
     
@@ -699,7 +699,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         
         if(ctx.getParent() instanceof FactorContext) { //Non void
             String returnValue = variableGenerator.getNewVariable();
-            treeAddressCode += "\n" + returnValue + " = pop";
+            treeAddressCode += "\npop " + returnValue;
             operands.push(returnValue);
         }
 
