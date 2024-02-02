@@ -41,7 +41,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     private String treeAddressCode;                 //Buffer to store tree address code
     private String incDecInstruction;               //Buffer to store increment or decrement instruction
     private int preOrPost;                          //Control variable for the inclusion of the incDecInstruction: 0->None, 1->Pre, 2->Post
-    private LinkedList<String> incDecID;            //List used to store the ids that must be incremented or decremented
     private VariableGenerator variableGenerator;    //Variable generator
     private LabelGenerator labelGenerator;          //Label generator
     private LinkedList<String> operands;            //List used to store operands. It's useful to have the operands available from different functions
@@ -56,7 +55,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         treeAddressCode = "";
         incDecInstruction = "";
         preOrPost = 0;
-        incDecID = new LinkedList<>();
         variableGenerator = VariableGenerator.getInstanceOf();
         labelGenerator = LabelGenerator.getInstanceOf();
         operands = new LinkedList<>();
@@ -299,7 +297,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             incDecInstruction += "-1";
 
         operands.push(id);
-        incDecID.push(id);
         return treeAddressCode;
     }
    
@@ -332,24 +329,13 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         String secondOperand = operands.pop();
         String newVariable = variableGenerator.getNewVariable();
         String operator = ctx.getChild(0).getText();
-        Boolean incDec = false;
 
-        if(preOrPost!= 0) { //Check if the id incremented(decremented) is used here
-            String s = incDecID.pop();
-            if(s.equals(firstOperand) || s.equals(secondOperand))
-                incDec = true;
-            else
-                incDecID.push(s);
-        } 
-
-        if(preOrPost == 1 && incDec) treeAddressCode += incDecInstruction;
+        if(preOrPost == 1) treeAddressCode += incDecInstruction;
         treeAddressCode += "\n" + newVariable + " = " + firstOperand + operator + secondOperand; 
-        if(preOrPost == 2 && incDec) treeAddressCode+= incDecInstruction;
+        if(preOrPost == 2) treeAddressCode+= incDecInstruction;
 
-        if(incDec) {
-            preOrPost = 0;
-            incDecInstruction = "";
-        }
+        preOrPost = 0;
+        incDecInstruction = "";
 
         operands.push(newVariable);
 
@@ -396,24 +382,15 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         String newVariable = variableGenerator.getNewVariable();
         String operator = ctx.getChild(0).getText();
 
-        Boolean incDec = false;
 
-        if(preOrPost!= 0){ //Check if the id incremented(decremented) is used here
-            String s = incDecID.pop();
-            if(s.equals(firstOperand) || s.equals(secondOperand))
-                incDec = true;
-            else
-                incDecID.push(s);
-        } 
-
-        if(preOrPost == 1 && incDec) treeAddressCode += incDecInstruction;
+        if(preOrPost == 1) treeAddressCode += incDecInstruction;
         treeAddressCode += "\n" + newVariable + " = " + firstOperand + operator + secondOperand; 
-        if(preOrPost == 2 && incDec) treeAddressCode+= incDecInstruction;
+        if(preOrPost == 2) treeAddressCode+= incDecInstruction;
 
-        if(incDec) {
-            preOrPost = 0;
-            incDecInstruction = "";
-        }
+      
+        preOrPost = 0;
+        incDecInstruction = "";
+        
 
         operands.push(newVariable);
 
