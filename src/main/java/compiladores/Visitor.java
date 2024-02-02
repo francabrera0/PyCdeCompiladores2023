@@ -513,7 +513,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     public String visitWhileStatement(WhileStatementContext ctx) {
         
         String entryLabel = labelGenerator.getNewLabel("InWhile");
-        treeAddressCode += "\n" + entryLabel;
+        treeAddressCode += "\n" + entryLabel + ":";
 
         visitLogicalArithmeticExpression(ctx.logicalArithmeticExpression());
         String condition = operands.pop();
@@ -525,7 +525,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         visitInstruction(ctx.instruction());
 
         treeAddressCode += "\njmp " + entryLabel;
-        treeAddressCode += "\n" + outLabel;
+        treeAddressCode += "\n" + outLabel + ":";
 
         return treeAddressCode;
     }
@@ -553,7 +553,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         visitInit(ctx.init());
         
         String entryLabel = labelGenerator.getNewLabel("InFor");
-        treeAddressCode += "\n" + entryLabel;
+        treeAddressCode += "\n" + entryLabel + ":";
 
         visitCondition(ctx.condition());
         
@@ -568,7 +568,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         visitUpdate(ctx.update());
 
         treeAddressCode += "\njmp " + entryLabel;
-        treeAddressCode += "\n" + outLabel;
+        treeAddressCode += "\n" + outLabel + ":";
 
         return treeAddressCode;
     }
@@ -652,7 +652,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     public String visitFunctionDeclaration(FunctionDeclarationContext ctx) {
 
         String entryLabel = ctx.ID().getText();
-        treeAddressCode += "\n" + entryLabel;
+        treeAddressCode += "\n" + entryLabel + ":";
         returnLabel = labelGenerator.getNewLabel("RetFunc");
         treeAddressCode += "\npop " + returnLabel;
 
@@ -695,7 +695,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
         String returnLabel = labelGenerator.getNewLabel("RetFuncCall");
         treeAddressCode += "\npush " + returnLabel;
         treeAddressCode += "\njump " + ctx.ID().getText();
-        treeAddressCode += "\n" + returnLabel;
+        treeAddressCode += "\n" + returnLabel + ":";
         
         if(ctx.getParent() instanceof FactorContext) { //Non void
             String returnValue = variableGenerator.getNewVariable();
@@ -782,11 +782,11 @@ public class Visitor extends compiladoresBaseVisitor<String> {
 
         endElseIfLabel = labelGenerator.getNewLabel("EndElseIf");
         treeAddressCode += "\njmp " + endElseIfLabel;
-        treeAddressCode += "\n" + endIfLabel;
+        treeAddressCode += "\n" + endIfLabel + ":";
 
         visitElseIfStatement(ctx.elseIfStatement());
         
-        treeAddressCode += "\n" + endElseIfLabel;
+        treeAddressCode += "\n" + endElseIfLabel + ":";
 
         return treeAddressCode;
     }
@@ -821,7 +821,7 @@ public class Visitor extends compiladoresBaseVisitor<String> {
             visitInstruction(ctx.instruction());
 
             treeAddressCode += "\njmp " + endElseIfLabel;
-            treeAddressCode += "\n" + endIfLabel;
+            treeAddressCode += "\n" + endIfLabel + ":";
 
             visitElseIfStatement(ctx.elseIfStatement());
         }
