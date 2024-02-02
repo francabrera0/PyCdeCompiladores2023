@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 public class App {
     public static void main(String[] args) throws Exception {
 
-        CharStream input = CharStreams.fromFileName("input/input4.c");
+        CharStream input = CharStreams.fromFileName("input/input3.c");
 
         // create a lexer that feeds off of input CharStream
         compiladoresLexer lexer = new compiladoresLexer(input);

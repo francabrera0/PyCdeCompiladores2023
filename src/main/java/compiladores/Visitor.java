@@ -347,12 +347,6 @@ public class Visitor extends compiladoresBaseVisitor<String> {
     }
 
     /**
-     * Visitar el At para encontrar si hay sumas o restas entre terminos aritméticos.
-     * En caso de que no haya más terminos retorna. Si si hay terminos, saca el primer operandod e la 
-     * lista y realiza una visita al otro termino. EN operands volverá el operando.
-     * Arma el TAC.
-     * Verifica si hay anidaciones. 
-     * 
      * visitAt()
      * 
      * @brief This node is visited in order to find add or subs between terms.
